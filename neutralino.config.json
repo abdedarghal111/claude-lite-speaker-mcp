@@ -1,0 +1,54 @@
+{
+  "applicationId": "es.abderra.claudeliteSpeaker",
+  "version": "1.0.0",
+  "defaultMode": "window",
+  "port": 0,
+  "documentRoot": "/resources/",
+  "url": "/",
+  "enableServer": true,
+  "enableNativeAPI": true,
+  "tokenSecurity": "one-time",
+  "enableServerContinuity": false,
+  "exportSymbols": false,
+  "singleInstance": true,
+  "logging": {
+    "enabled": true,
+    "writeToLogFile": false
+  },
+  "nativeAllowList": [
+    "app.*",
+    "os.*",
+    "filesystem.*",
+    "events.*",
+    "window.*",
+    "debug.log"
+  ],
+  "modes": {
+    "window": {
+      "title": "Claude Lite Speaker",
+      "width": 480,
+      "height": 720,
+      "minWidth": 420,
+      "minHeight": 540,
+      "icon": "/resources/icons/appIcon.png",
+      "enableInspector": true,
+      "borderless": false,
+      "maximizable": false,
+      "exitProcessOnClose": false
+    }
+  },
+  "cli": {
+    "binaryName": "claude-lite-speaker",
+    "resourcesPath": "/resources/",
+    "extensionsPath": "/extensions/",
+    "clientLibrary": "/resources/js/neutralino.js",
+    "binaryVersion": "6.9.0",
+    "clientVersion": "6.9.0",
+    "binaryMetadata": {
+      "name": "Claude Lite Speaker",
+      "description": "Bandeja de Claude Lite Speaker",
+      "copyright": "Abderrahim Darghal Belkacemi",
+      "icon": "/resources/icons/appIcon.ico"
+    }
+  }
+}
