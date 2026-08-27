@@ -1,0 +1,27 @@
+{
+  "name": "claude-lite-speaker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "author": {
+    "name": "Abderrahim Darghal Belkacemi",
+    "email": "abdedarghal111@gmail.com"
+  },
+  "description": "MCP y App de bandeja de Claude Lite Speaker: síntesis, cola de audio, catálogo de voces y ajustes.",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@11.24.0",
+  "scripts": {
+    "dev": "neu run",
+    "update": "neu update",
+    "build": "neu build --release"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@neutralinojs/neu": "^11.7.2",
+    "@echogarden/espeak-ng-emscripten": "^0.3.5",
+    "node-web-audio-api": "^2.2.0",
+    "onnxruntime-node": "^1.19.2"
+  }
+}
