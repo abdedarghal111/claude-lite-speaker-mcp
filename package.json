@@ -13,15 +13,18 @@
   },
   "packageManager": "pnpm@11.24.0",
   "scripts": {
-    "dev": "neu run",
+    "dev": "node scripts/build-server-exe.mjs && neu run",
     "update": "neu update",
-    "build": "neu build --release"
+    "build": "node scripts/build-server-exe.mjs && neu build --release"
   },
   "dependencies": {
+    "@echogarden/espeak-ng-emscripten": "^0.3.5",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@neutralinojs/neu": "^11.7.2",
-    "@echogarden/espeak-ng-emscripten": "^0.3.5",
     "node-web-audio-api": "^2.2.0",
     "onnxruntime-node": "^1.19.2"
+  },
+  "devDependencies": {
+    "rcedit": "^5.0.2"
   }
 }

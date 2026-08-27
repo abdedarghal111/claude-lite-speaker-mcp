@@ -7,6 +7,13 @@
   "url": "/",
   "enableServer": true,
   "enableNativeAPI": true,
+  "enableExtensions": true,
+  "extensions": [
+    {
+      "id": "es.abderra.claudeliteSpeaker.audioServer",
+      "command": "node ${NL_PATH}/server/bootstrap.js"
+    }
+  ],
   "tokenSecurity": "one-time",
   "enableServerContinuity": false,
   "exportSymbols": false,
@@ -21,6 +28,7 @@
     "filesystem.*",
     "events.*",
     "window.*",
+    "extensions.*",
     "debug.log"
   ],
   "modes": {
