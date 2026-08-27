@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Claude Lite Speaker</title>
+  <link rel="icon" href="icons/appIcon.png" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="head">
+    <img class="mark" src="icons/appIcon.png" alt="" />
+    <div>
+      <h1>Claude Lite Speaker</h1>
+      <p id="status">Conectando con el servidor de audio…</p>
+    </div>
+  </div>
+
+  <label class="row">
+    <input type="checkbox" id="enabled" />
+    Habla automática
+  </label>
+
+  <label class="row">
+    <input type="checkbox" id="chime" />
+    Ding de aviso
+  </label>
+
+  <label class="row">
+    <input type="checkbox" id="autostart" />
+    Autoarranque
+  </label>
+
+  <label class="row">
+    Velocidad: <span id="speedValue">1.0x</span>
+    <input type="range" id="speed" min="0.5" max="3" step="0.1" />
+  </label>
+
+  <label class="row">
+    Volumen: <span id="volumeValue">1.0</span>
+    <input type="range" id="volume" min="0" max="1" step="0.05" />
+  </label>
+
+  <p class="voice">Voz actual: <span id="voice">—</span></p>
+  <p class="voice">Puerto del servidor: <span id="port">—</span></p>
+
+  <input
+    type="text"
+    id="speakTestText"
+    class="speak-test-input"
+    value="Hola, así sueno ahora mismo."
+    placeholder="Escribe algo para escucharlo..."
+  />
+  <div class="test-buttons">
+    <button id="speakTest">Probar voz</button>
+    <button id="speakStop" class="secondary" disabled>Parar</button>
+  </div>
+
+  <section class="voices-panel">
+    <div class="voices-panel-head">
+      <h2>Voces</h2>
+      <label class="checkbox-inline">
+        <input type="checkbox" id="onlyDownloaded" checked />
+        Solo descargadas
+      </label>
+    </div>
+
+    <input
+      type="text"
+      id="voiceFilter"
+      class="voice-filter"
+      placeholder="Buscar por id o idioma (es, en_US, davefx...)"
+      hidden
+    />
+
+    <div id="downloadsProgress" class="downloads-progress"></div>
+
+    <div id="voiceList" class="voice-list">
+      <p class="voice-list-empty">Buscando voces…</p>
+    </div>
+  </section>
+
+  <script src="js/neutralino.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
