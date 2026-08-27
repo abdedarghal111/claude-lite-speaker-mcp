@@ -9,3 +9,4 @@ yarn.lock
 data/
 dist/
 .tmp/
+bin
