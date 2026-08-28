@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url"
 const APP_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..")
 
 export const DATA_DIR = path.join(APP_ROOT, "data")
-export const STATE_FILE = path.join(DATA_DIR, "state.json")
+export const SETTINGS_FILE = path.join(DATA_DIR, "settings.json")
 export const VOICES_DIR = path.join(DATA_DIR, "voices")
 export const CACHE_DIR = path.join(DATA_DIR, "cache")
 export const VOICES_CATALOG_CACHE = path.join(CACHE_DIR, "voices.json")
