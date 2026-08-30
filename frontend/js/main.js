@@ -6,8 +6,8 @@ async function callCommand(name, args = {}) {
   return data.result
 }
 
-// Límites de velocidad y volumen recibidos de piper_status (ver applyLimits()).
-// null hasta que llega el primer piper_status.
+// Límites de velocidad y volumen recibidos de status (ver applyLimits()).
+// null hasta que llega el primer status.
 let limits = null
 
 // Aplica los límites recibidos a los sliders; solo escribe si el valor cambió.
@@ -43,8 +43,7 @@ const els = {
 // quiet:true evita mostrar en pantalla el error de un refresco periódico o de fondo.
 async function refreshStatus({ quiet = false } = {}) {
   try {
-    const raw = await callCommand("piper_status")
-    const status = JSON.parse(raw)
+    const status = await callCommand("status")
     applyLimits(status.limits)
     // Refleja si el servidor está reproduciendo audio en este momento.
     els.status.textContent = status.speaking ? "Reproduciendo…" : "Conectado."
@@ -153,8 +152,7 @@ async function refreshVoicesPanel() {
 
   let data
   try {
-    const raw = await callCommand("piper_voices_panel_data", { includeCatalog })
-    data = JSON.parse(raw)
+    data = await callCommand("voicesPanelData", { includeCatalog })
   } catch {
     // el poll de refreshStatus ya informa si el servidor se cayó
     return
@@ -234,7 +232,7 @@ function wireVoicesPanel() {
     btn.disabled = true
     btn.textContent = action === "use" ? "Activando…" : "Descargando…"
 
-    callCommand(action === "use" ? "piper_set_voice" : "piper_download_voice", { voice_id: voiceId })
+    callCommand(action === "use" ? "setVoice" : "downloadVoice", { voice_id: voiceId })
       .catch((err) => {
         els.status.textContent = `Error: ${err.message}`
       })
@@ -257,7 +255,7 @@ function wireControls() {
   )
 
   els.notification.addEventListener("change", () =>
-    callCommand("piper_set_notification", { enabled: els.notification.checked }).catch(
+    callCommand("setNotification", { enabled: els.notification.checked }).catch(
       (err) => (els.status.textContent = `Error: ${err.message}`)
     )
   )
@@ -266,19 +264,19 @@ function wireControls() {
     els.speedValue.textContent = `${els.speed.value}x`
   })
   els.speed.addEventListener("change", () =>
-    callCommand("piper_set_speed", { speed: Number(els.speed.value) }).catch(
+    callCommand("setSpeed", { speed: Number(els.speed.value) }).catch(
       (err) => (els.status.textContent = `Error: ${err.message}`)
     )
   )
 
   els.volume.addEventListener("input", () => {
     els.volumeValue.textContent = `${els.volume.value}%`
-    // limits es null hasta el primer piper_status; sin límites no se marca "danger".
+    // limits es null hasta el primer status; sin límites no se marca "danger".
     if (limits) els.volumeValue.classList.toggle("danger", Number(els.volume.value) > limits.dangerZoneVolume)
   })
   els.volume.addEventListener("change", () =>
     // allow_overdrive:true porque es el usuario moviendo el slider, no una llamada externa.
-    callCommand("piper_set_volume", { volume: Number(els.volume.value), allow_overdrive: true }).catch(
+    callCommand("setVolume", { volume: Number(els.volume.value), allow_overdrive: true }).catch(
       (err) => (els.status.textContent = `Error: ${err.message}`)
     )
   )
@@ -303,7 +301,7 @@ function wireControls() {
 
   els.speakStop.addEventListener("click", () => {
     // Refresca el estado sin esperar al tick de 1s, para que se note el corte.
-    callCommand("piper_stop")
+    callCommand("stop")
       .then(() => refreshStatus({ quiet: true }))
       .catch((err) => (els.status.textContent = `Error: ${err.message}`))
   })

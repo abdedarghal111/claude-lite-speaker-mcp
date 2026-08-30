@@ -4,7 +4,7 @@
 import { AudioEngine } from "./AudioEngine.js"
 import { AudioOutput } from "./AudioOutput.js"
 import { Logger } from "./Logger.js"
-import { DEFAULT_VOICE, MIN_SPEED, MAX_SPEED, MIN_VOLUME, DANGER_ZONE_VOLUME, MAX_VOLUME } from "../values/constants.js"
+import { MIN_SPEED, MAX_SPEED, MIN_VOLUME, DANGER_ZONE_VOLUME, MAX_VOLUME } from "../values/constants.js"
 import { AppSettings } from "./AppSettings.js"
 import { VoicesManager } from "./VoicesManager.js"
 import { Chat } from "./Chat.js"
@@ -21,6 +21,11 @@ export class App {
         this.mcp = new MCP(this)
     }
 
+    // Arranca el servidor MCP.
+    async start() {
+        await this.mcp.start()
+    }
+
     static getInstance() {
         if (!App.instance) {
             App.instance = new App()
@@ -30,16 +35,16 @@ export class App {
 
     // Mapa nombre de comando -> nombre del método cmd* que lo resuelve.
     static FRONTEND_COMMANDS = {
-        piper_speak: "cmdSpeak",
-        piper_stop: "cmdStop",
-        piper_set_voice: "cmdSetVoice",
-        piper_download_voice: "cmdDownloadVoice",
-        piper_voices_panel_data: "cmdVoicesPanelData",
+        speak: "cmdSpeak",
+        stop: "cmdStop",
+        setVoice: "cmdSetVoice",
+        downloadVoice: "cmdDownloadVoice",
+        voicesPanelData: "cmdVoicesPanelData",
         refreshVoiceCatalog: "cmdRefreshVoiceCatalog",
-        piper_set_speed: "cmdSetSpeed",
-        piper_set_notification: "cmdSetNotification",
-        piper_set_volume: "cmdSetVolume",
-        piper_status: "cmdStatus",
+        setSpeed: "cmdSetSpeed",
+        setNotification: "cmdSetNotification",
+        setVolume: "cmdSetVolume",
+        status: "cmdStatus",
     }
 
     // Resuelve un comando pedido por la ventana de ajustes.
@@ -111,7 +116,7 @@ export class App {
         const lastError = Logger.lastError
         const snapshot = {
             ...AppSettings.values,
-            voice: AppSettings.read("voice") || DEFAULT_VOICE,
+            voice: AppSettings.read("voice"),
             speaking: AudioOutput.isAnyPlaying(),
             // Límites usados por la ventana de ajustes para los sliders.
             limits: {
@@ -123,7 +128,7 @@ export class App {
             },
             ...(lastError ? { last_error: lastError } : {}),
         }
-        return { ok: true, result: JSON.stringify(snapshot, null, 2) }
+        return { ok: true, result: snapshot }
     }
 
     // Valida y activa una voz (coordina VoicesManager y AppSettings).
@@ -168,7 +173,7 @@ export class App {
     // Datos para el panel de voces de la ventana de ajustes: voz activa,
     // voces descargadas, descargas en curso y, si se pide, el catálogo completo.
     async voicesPanelData(includeCatalog) {
-        const currentVoice = AppSettings.read("voice") || DEFAULT_VOICE
-        return JSON.stringify(await VoicesManager.panelData(currentVoice, includeCatalog))
+        const currentVoice = AppSettings.read("voice")
+        return VoicesManager.panelData(currentVoice, includeCatalog)
     }
 }

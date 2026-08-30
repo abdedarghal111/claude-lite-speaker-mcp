@@ -14,11 +14,10 @@ export const VOICES_CATALOG_CACHE = path.join(CACHE_DIR, "voices.json")
 export const WEBVIEW_PROFILE_DIR = path.join(DATA_DIR, "webview-profile")
 
 // Iconos de la bandeja y de la app.
-export const RESOURCES_DIR = path.join(APP_ROOT, "resources")
+export const RESOURCES_DIR = path.join(APP_ROOT, "res")
 
 // HTML/CSS/JS de la ventana de ajustes.
 export const FRONTEND_DIR = path.join(APP_ROOT, "frontend")
 
-// Registro de errores del servidor de audio, usado por piper_status para
-// diagnosticar fallos silenciosos.
-export const LAST_ERROR_LOG = path.join(DATA_DIR, "last-error.log")
+// Registro de errores de la aplicación para diagnosticar fallos silenciosos.
+export const ERROR_LOG_FILE = path.join(DATA_DIR, "error.log")

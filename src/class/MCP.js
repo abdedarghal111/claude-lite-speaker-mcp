@@ -83,8 +83,7 @@ export class MCP {
         const { speed, notification, volume } = this.app.chat.speak(text)
         return (
             `Reproduciendo con la voz "${voice}" a velocidad ${speed}x y volumen ${volume}%${notification ? " (con ding previo)" : ""} ` +
-            "en segundo plano (no bloquea la conversación). Si tras un rato no se oye nada, consulta piper_status " +
-            "para ver si hubo algún error."
+            "en segundo plano (no bloquea la conversación)."
         )
     }
 

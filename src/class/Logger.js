@@ -1,6 +1,6 @@
 // Registro de errores: guarda el último en memoria y lo añade a un log en disco.
 import fs from "node:fs"
-import { DATA_DIR, LAST_ERROR_LOG } from "../values/paths.js"
+import { DATA_DIR, ERROR_LOG_FILE } from "../values/paths.js"
 
 export class Logger {
     static #lastError = ""
@@ -17,6 +17,6 @@ export class Logger {
             fs.mkdirSync(DATA_DIR, { recursive: true })
         }
 
-        fs.appendFileSync(LAST_ERROR_LOG, message + "\n")
+        fs.appendFileSync(ERROR_LOG_FILE, message + "\n")
     }
 }

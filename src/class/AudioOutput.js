@@ -117,8 +117,7 @@ export class AudioOutput {
         return AudioOutput.#playbacks.has(id)
     }
 
-    // Para el icono de bandeja y piper_status: si algo suena en cualquier
-    // Chat, la app "está hablando".
+    // true si hay algo sonando en cualquier Chat, no solo en este.
     static isAnyPlaying() {
         return AudioOutput.#playbacks.size > 0
     }
