@@ -10,7 +10,7 @@ process.title = "Claude Lite Speaker"
 
 const { Logger } = await import("./class/Logger.js")
 const { App } = await import("./class/App.js")
-const { RESOURCES_DIR } = await import("./values/paths.js")
+const { RESOURCES_DIR, FRONTEND_DIR } = await import("./values/paths.js")
 
 // Registra con traza cualquier error no controlado y termina el proceso.
 function fatal(err) {
@@ -30,7 +30,7 @@ const sea = await import("node:sea").catch(() => null)
 const isPackaged = Boolean(sea?.isSea?.())
 const APP_ROOT = isPackaged ? path.dirname(process.execPath) : path.join(path.dirname(HERE_FILE), "..")
 
-await app.tray.start({ resourcesDir: RESOURCES_DIR, appRoot: APP_ROOT })
+await app.tray.start({ resourcesDir: RESOURCES_DIR, frontendDir: FRONTEND_DIR, appRoot: APP_ROOT })
 
 // No se abre sola si el autoarranque la lanzó en segundo plano
 const launchedFromAutostart = process.argv.includes("--opened-from-autostart")

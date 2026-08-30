@@ -11,12 +11,29 @@ const MIME = {
     ".svg": "image/svg+xml",
 }
 
+// Resuelve pathname dentro de baseDir; null si el resultado se escapa de
+// baseDir (p. ej. con "..").
+function resolveStaticFile(baseDir, pathname) {
+    const filePath = path.join(baseDir, pathname)
+    const relative = path.relative(baseDir, filePath)
+    if (relative.startsWith("..") || path.isAbsolute(relative)) {
+        return null
+    }
+    return filePath
+}
+
 export class Window {
     // nativeApp: instancia de @webviewjs/webview compartida con el tray.
+    // resourcesDir/frontendDir: únicas carpetas servidas por el protocolo app://
+    // (ver open()); nada fuera de ellas es accesible desde la ventana.
     // profileDir: carpeta de perfil del webview, separada de DATA_DIR.
-    constructor({ nativeApp, resourcesDir, appIconBuffer, api, profileDir }) {
+    // api: funciones propias de la ventana (autoarranque, devtools); los
+    // comandos de negocio llegan por this.app.frontendApi (ver App.js).
+    constructor({ app, nativeApp, resourcesDir, frontendDir, appIconBuffer, api, profileDir }) {
+        this.app = app
         this.nativeApp = nativeApp
         this.resourcesDir = resourcesDir
+        this.frontendDir = frontendDir
         this.appIconBuffer = appIconBuffer
         this.api = api
         this.profileDir = profileDir
@@ -57,7 +74,13 @@ export class Window {
 
         this.win.registerProtocol("app", async (request) => {
             const url = new URL(request.url)
-            const filePath = path.join(this.resourcesDir, decodeURIComponent(url.pathname))
+            const pathname = decodeURIComponent(url.pathname)
+            // /icons/* viene de resourcesDir (bandeja); el resto, de frontendDir.
+            const baseDir = pathname.startsWith("/icons/") ? this.resourcesDir : this.frontendDir
+            const filePath = resolveStaticFile(baseDir, pathname)
+            if (!filePath) {
+                return new Response("Forbidden", { status: 403, headers: { "Content-Type": "text/plain; charset=utf-8" } })
+            }
             try {
                 return new Response(await readFile(filePath), {
                     headers: { "Content-Type": MIME[path.extname(filePath)] ?? "application/octet-stream" },
@@ -71,12 +94,25 @@ export class Window {
         })
 
         this.webContext = this.nativeApp.createWebContext({ dataDirectory: this.profileDir })
-        this.webview = this.win.createWebview({ url: "app://localhost/index.html", webContext: this.webContext })
-        this.webview.expose("native", this.api)
+        this.webview = this.win.createWebview({
+            url: "app://localhost/index.html",
+            webContext: this.webContext,
+            enableDevtools: true,
+        })
+        this.webview.expose("native", {
+            // Único punto de entrada a los comandos de negocio (ver App.js).
+            callCommand: (name, args) => this.app.handleCommand(name, args),
+            ...this.api,
+        })
     }
 
     // Oculta la ventana en vez de destruirla; solo "Salir" en el menú de bandeja termina el proceso.
     close() {
         this.win?.hide()
+    }
+
+    openDevtools() {
+        this.webview?.openDevtools()
+        return true
     }
 }

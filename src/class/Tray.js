@@ -2,7 +2,9 @@
 import fs from "node:fs"
 import path from "node:path"
 import { Window } from "./Window.js"
+import { AudioOutput } from "./AudioOutput.js"
 import { isAutostartEnabled, setAutostart, initAutostart } from "../lib/autostart.js"
+import { WEBVIEW_PROFILE_DIR } from "../values/paths.js"
 
 export class Tray {
     constructor(app) {
@@ -16,20 +18,18 @@ export class Tray {
         this.speakingFrame = 0
     }
 
-    // resourcesDir: carpeta con los PNG de bandeja y con index.html/css/js de la ventana.
-    // appRoot: raíz de la app, la necesita Window para exponer setAutostart y el perfil del webview.
-    async start({ resourcesDir, appRoot }) {
+    // resourcesDir: carpeta con los PNG de bandeja. frontendDir: HTML/CSS/JS de la ventana.
+    // appRoot: raíz del binario, la necesita Window para exponer setAutostart.
+    async start({ resourcesDir, frontendDir, appRoot }) {
         // Corrige el destino del autoarranque si la app se movió o se reempaquetó.
         await initAutostart(appRoot)
 
         const ICONS = {
             idle: path.join(resourcesDir, "icons", "trayIcon.png"),
-            muted: path.join(resourcesDir, "icons", "trayIconMuted.png"),
             speaking: [1, 2, 3].map((n) => path.join(resourcesDir, "icons", `trayIconSpeaking${n}.png`)),
         }
         this.iconBuffers = {
             idle: fs.readFileSync(ICONS.idle),
-            muted: fs.readFileSync(ICONS.muted),
             speaking: ICONS.speaking.map((p) => fs.readFileSync(p)),
         }
 
@@ -45,12 +45,13 @@ export class Tray {
         // La ventana de ajustes vive en esta misma Application (ver class/Window.js).
         const appIconBuffer = fs.readFileSync(path.join(resourcesDir, "icons", "appIcon.png"))
         this.window = new Window({
+            app: this.app,
             nativeApp: this.nativeApp,
             resourcesDir,
+            frontendDir,
             appIconBuffer,
-            profileDir: path.join(appRoot, "data", "webview-profile"),
+            profileDir: WEBVIEW_PROFILE_DIR,
             api: {
-                callCommand: (name, args) => this.app.mcp.handleCommand(name, args),
                 isAutostartEnabled,
                 setAutostart: (enabled) => setAutostart(appRoot, enabled),
                 openDevtools: () => this.window.openDevtools(),
@@ -108,21 +109,12 @@ export class Tray {
         this.trayHandle?.setIcon(data)
     }
 
-    async updateIcon() {
-        try {
-            const status = JSON.parse(await this.app.status())
-            if (!status.enabled) {
-                this.speakingFrame = 0
-                this.setIcon("muted")
-            } else if (status.speaking) {
-                this.speakingFrame = (this.speakingFrame + 1) % this.iconBuffers.speaking.length
-                this.setIcon("speaking")
-            } else {
-                this.setIcon("idle")
-            }
-        } catch {
-            // El siguiente tick reintenta si esta llamada falla.
-            // TODO: handlear el error con la issue https://github.com/abdedarghal111/claude-lite-speaker-mcp/issues/11
+    updateIcon() {
+        if (AudioOutput.isAnyPlaying()) {
+            this.speakingFrame = (this.speakingFrame + 1) % this.iconBuffers.speaking.length
+            this.setIcon("speaking")
+        } else {
+            this.setIcon("idle")
         }
     }
 

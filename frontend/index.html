@@ -16,12 +16,7 @@
   </div>
 
   <label class="row">
-    <input type="checkbox" id="enabled" />
-    Habla automática
-  </label>
-
-  <label class="row">
-    <input type="checkbox" id="chime" />
+    <input type="checkbox" id="notification" />
     Ding de aviso
   </label>
 
@@ -32,16 +27,15 @@
 
   <label class="row">
     Velocidad: <span id="speedValue">1.0x</span>
-    <input type="range" id="speed" min="0.5" max="3" step="0.1" />
+    <input type="range" id="speed" step="0.1" />
   </label>
 
   <label class="row">
-    Volumen: <span id="volumeValue">1.0</span>
-    <input type="range" id="volume" min="0" max="1" step="0.05" />
+    Volumen: <span id="volumeValue">100%</span>
+    <input type="range" id="volume" step="1" />
   </label>
 
   <p class="voice">Voz actual: <span id="voice">—</span></p>
-  <p class="voice">Puerto del servidor: <span id="port">—</span></p>
 
   <input
     type="text"
@@ -64,6 +58,8 @@
       </label>
     </div>
 
+    <button type="button" id="refreshCatalogBtn" class="secondary">Descargar catálogo de voces</button>
+
     <input
       type="text"
       id="voiceFilter"
@@ -79,7 +75,8 @@
     </div>
   </section>
 
-  <script src="js/neutralino.js"></script>
+  <button type="button" id="openDevtoolsBtn" class="secondary">Abrir herramientas de desarrollador</button>
+
   <script src="js/main.js"></script>
 </body>
 </html>

@@ -8,6 +8,7 @@
   --onred: #fff7f1;
   --text: #3d332c;
   --muted: #8d8075;
+  --warn: #c8791f;
 }
 
 * {
@@ -74,6 +75,14 @@ h1 {
   transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
 
+/* Mini explicación bajo un .row, para controles cuyo nombre solo no basta. */
+.hint {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--muted);
+  margin: -4px 2px 12px;
+}
+
 .row:hover {
   box-shadow: 0 4px 14px rgba(61, 51, 44, 0.1);
   transform: translateY(-1px);
@@ -89,6 +98,12 @@ input[type="range"] {
   flex: 1;
   accent-color: var(--red);
   height: 4px;
+}
+
+/* Volumen por encima del original (zona de peligro, ver main.js). */
+#volumeValue.danger {
+  color: var(--warn);
+  font-weight: 700;
 }
 
 .voice {
