@@ -72,16 +72,18 @@ async function setWindowsAutostart(target, appRoot, enabled) {
     const linkPath = windowsStartupLinkPath()
     if (!enabled) {
         await fs.promises.rm(linkPath, { force: true }).catch(() => {})
-        return
+        return true
     }
     const ps =
         `$s = New-Object -ComObject WScript.Shell; ` +
         `$sc = $s.CreateShortcut('${linkPath}'); ` +
         `$sc.TargetPath = '${target}'; ` +
+        `$sc.Arguments = '--opened-from-autostart'; ` +
         `$sc.WorkingDirectory = '${appRoot}'; ` +
         `$sc.Save()`
     await execFileAsync("powershell", ["-NoProfile", "-Command", ps])
     await clearWindowsStartupApproved()
+    return true
 }
 
 // ----------------------------------------------------------------------------
@@ -114,19 +116,20 @@ async function setMacAutostart(target, enabled) {
     if (!enabled) {
         await execFileAsync("launchctl", ["bootout", domain, plistPath]).catch(() => {})
         await fs.promises.rm(plistPath, { force: true }).catch(() => {})
-        return
+        return true
     }
     const plist =
         `<?xml version="1.0" encoding="UTF-8"?>\n` +
         `<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n` +
         `<plist version="1.0"><dict>\n` +
         `<key>Label</key><string>com.claudeliteSpeaker.trayapp</string>\n` +
-        `<key>ProgramArguments</key><array><string>${target}</string></array>\n` +
+        `<key>ProgramArguments</key><array><string>${target}</string><string>--opened-from-autostart</string></array>\n` +
         `<key>RunAtLoad</key><true/>\n` +
         `</dict></plist>\n`
     await fs.promises.writeFile(plistPath, plist)
     await execFileAsync("launchctl", ["bootout", domain, plistPath]).catch(() => {})
     await execFileAsync("launchctl", ["bootstrap", domain, plistPath])
+    return true
 }
 
 // ----------------------------------------------------------------------------
@@ -155,17 +158,18 @@ async function setLinuxAutostart(target, enabled) {
     const desktopPath = linuxAutostartPath()
     if (!enabled) {
         await fs.promises.rm(desktopPath, { force: true }).catch(() => {})
-        return
+        return true
     }
     await fs.promises.mkdir(path.dirname(desktopPath), { recursive: true })
     const desktopEntry =
         `[Desktop Entry]\n` +
         `Type=Application\n` +
         `Name=Claude Lite Speaker\n` +
-        `Exec="${target}"\n` +
+        `Exec="${target}" --opened-from-autostart\n` +
         `Terminal=false\n` +
         `X-GNOME-Autostart-enabled=true\n`
     await fs.promises.writeFile(desktopPath, desktopEntry)
+    return true
 }
 
 // ----------------------------------------------------------------------------
