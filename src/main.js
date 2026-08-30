@@ -10,7 +10,7 @@ process.title = "Claude Lite Speaker"
 
 const { Logger } = await import("./class/Logger.js")
 const { App } = await import("./class/App.js")
-const { RESOURCES_DIR, FRONTEND_DIR } = await import("./values/paths.js")
+const { RESOURCES_DIR, FRONTEND_DIR } = await import("./paths.js")
 
 // Registra con traza cualquier error no controlado y termina el proceso.
 function fatal(err) {

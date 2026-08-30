@@ -1,8 +1,11 @@
+// Simula la raíz del ejecutable
+// solo deben crearse rutas a ficheros externos al código (datos, recursos, etc)
+// nunca a módulos del programa porque no existirán en el momento de compilar
+// y como consecuencia por eso vive en la raíz del código este archivo.
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 
-// Rutas de datos de la app
-const APP_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..")
+const APP_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..")
 
 export const DATA_DIR = path.join(APP_ROOT, "data")
 export const SETTINGS_FILE = path.join(DATA_DIR, "settings.json")

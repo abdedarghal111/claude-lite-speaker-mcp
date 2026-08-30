@@ -4,7 +4,7 @@ import path from "node:path"
 import { Window } from "./Window.js"
 import { AudioOutput } from "./AudioOutput.js"
 import { isAutostartEnabled, setAutostart, initAutostart } from "../lib/autostart.js"
-import { WEBVIEW_PROFILE_DIR } from "../values/paths.js"
+import { WEBVIEW_PROFILE_DIR } from "../paths.js"
 
 export class Tray {
     constructor(app) {

@@ -7,7 +7,7 @@ import fs from "node:fs"
 import path from "node:path"
 import { pipeline } from "node:stream/promises"
 import { Readable } from "node:stream"
-import { CACHE_DIR, VOICES_CATALOG_CACHE, VOICES_DIR } from "../values/paths.js"
+import { CACHE_DIR, VOICES_CATALOG_CACHE, VOICES_DIR } from "../paths.js"
 
 const VOICES_JSON_URL = "https://huggingface.co/rhasspy/piper-voices/raw/main/voices.json"
 const HF_BASE = "https://huggingface.co/rhasspy/piper-voices/resolve/main/"

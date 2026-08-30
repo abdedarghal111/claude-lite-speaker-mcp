@@ -1,6 +1,6 @@
 // Preferencias del usuario, con valores por defecto y validación.
 import fs from "node:fs"
-import { SETTINGS_FILE, DATA_DIR } from "../values/paths.js"
+import { SETTINGS_FILE, DATA_DIR } from "../paths.js"
 import {
     DEFAULT_VOICE,
     DEFAULT_SPEED,
