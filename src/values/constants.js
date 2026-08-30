@@ -5,7 +5,7 @@ export const DEFAULT_SPEED = 1.0
 export const MIN_SPEED = 0.5
 export const MAX_SPEED = 3.0
 
-export const DEFAULT_CHIME = true
+export const DEFAULT_NOTIFICATION = true
 
 // Volumen en porcentaje. 100 = volumen original de la síntesis, no el máximo.
 export const MIN_VOLUME = 0
