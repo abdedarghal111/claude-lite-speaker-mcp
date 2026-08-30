@@ -7,7 +7,6 @@ import { Logger } from "./Logger.js"
 import { sanitizeForSpeech } from "../lib/sanitize-for-speech.js"
 import { PLAYBACK_DRAIN_MS } from "../values/constants.js"
 import { AppSettings } from "./AppSettings.js"
-import { VoicesManager } from "./VoicesManager.js"
 
 // Duerme ms milisegundos.
 function sleep(ms) {
@@ -147,10 +146,9 @@ export class Chat {
         const speed = AppSettings.read("speed")
         const notification = AppSettings.read("notification")
         const volume = AppSettings.read("volume")
-        const needsDownload = !VoicesManager.voiceFilesReady(voice)
 
         this.#enqueue({ text, voice, speed, notification, volume })
-        return { voice, speed, notification, volume, needsDownload }
+        return { voice, speed, notification, volume }
     }
 
     // Corta el audio en reproducción en cualquier Chat, no solo en este.
