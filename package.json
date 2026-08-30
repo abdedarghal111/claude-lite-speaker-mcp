@@ -20,8 +20,10 @@
     "@echogarden/espeak-ng-emscripten": "^0.3.5",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@webviewjs/webview": "^0.4.3",
+    "express": "^5.2.1",
     "node-web-audio-api": "^2.2.0",
-    "onnxruntime-node": "^1.19.2"
+    "onnxruntime-node": "^1.19.2",
+    "zod": "^4.5.2"
   },
   "devDependencies": {
     "postject": "1.0.0-alpha.6",
