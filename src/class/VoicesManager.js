@@ -80,45 +80,9 @@ export class VoicesManager {
         const entry = catalog[voiceId]
         if (!entry) {
             // TODO: handlear el error con la issue https://github.com/abdedarghal111/claude-lite-speaker-mcp/issues/11
-            throw new Error(
-                `Voz desconocida: "${voiceId}". Usa la tool piper_list_voices (o /voces) para ver identificadores válidos.`
-            )
+            throw new Error(`Voz desconocida: "${voiceId}". Elige una voz válida desde la ventana de ajustes.`)
         }
         return entry
-    }
-
-    // Voces del idioma dado; [] si no hay catálogo.
-    static async listVoices(language) {
-        const catalog = VoicesManager.#readCachedCatalog()
-        if (!catalog) {
-            return []
-        }
-        const q = String(language).trim().toLowerCase()
-        const entries = Object.values(catalog).filter((v) => {
-            const code = (v.language?.code || "").toLowerCase()
-            const family = (v.language?.family || "").toLowerCase()
-
-            // código exacto
-            const exactCode = code === q
-            // variante regional
-            const regionalCode = code.startsWith(`${q}_`)
-            // misma familia
-            const sameFamily = family === q
-            // id de voz
-            const idStartsWithQuery = v.key.toLowerCase().startsWith(q)
-
-            return exactCode || regionalCode || sameFamily || idStartsWithQuery
-        })
-
-        return entries
-            .map((v) => ({
-                id: v.key,
-                name: v.name,
-                language: v.language?.code,
-                language_name: v.language?.name_english,
-                quality: v.quality,
-            }))
-            .sort((a, b) => a.id.localeCompare(b.id))
     }
 
     // Catálogo completo, sin filtrar; [] si no hay catálogo.
@@ -130,24 +94,6 @@ export class VoicesManager {
         return Object.values(catalog)
             .map((v) => ({ id: v.key, language: v.language?.code, language_name: v.language?.name_english, quality: v.quality }))
             .sort((a, b) => a.id.localeCompare(b.id))
-    }
-
-    // Idiomas presentes en el catálogo, con el número de voces de cada uno;
-    // [] si no hay catálogo.
-    static async listLanguages() {
-        const catalog = VoicesManager.#readCachedCatalog()
-        if (!catalog) {
-            return []
-        }
-        const map = new Map()
-        for (const v of Object.values(catalog)) {
-            const code = v.language?.code || "??"
-            const name = v.language?.name_english || code
-            const cur = map.get(code) || { code, name_english: name, count: 0 }
-            cur.count += 1
-            map.set(code, cur)
-        }
-        return [...map.values()].sort((a, b) => a.code.localeCompare(b.code))
     }
 
     // Rutas de los dos ficheros de una voz (modelo y configuración).
@@ -203,6 +149,23 @@ export class VoicesManager {
         })
         VoicesManager.#inFlightDownloads.set(voiceId, promise)
         return promise
+    }
+
+    // Valida voiceId contra el catálogo y descarga sus ficheros. Devuelve el id normalizado.
+    static async download(voiceId) {
+        const id = String(voiceId || "").trim()
+
+        if (!id) {
+            throw new Error("Falta voice_id.")
+        }
+
+        if (!VoicesManager.hasCatalog()) {
+            throw new Error('No hay catálogo de voces descargado todavía. Pulsa "Descargar catálogo de voces" en la ventana de ajustes.')
+        }
+        
+        await VoicesManager.getVoiceEntry(id)
+        await VoicesManager.ensureVoiceFiles(id)
+        return id
     }
 
     static async #downloadVoiceFiles(voiceId) {
