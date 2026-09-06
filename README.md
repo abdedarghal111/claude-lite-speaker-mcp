@@ -8,8 +8,7 @@
     <a href="#qué-es-esto">Qué es esto</a> ·
     <a href="#funcionalidades">Funcionalidades</a> ·
     <a href="#desarrollo">Desarrollo</a> ·
-    <a href="#menciones-honorables">Menciones honorables</a> ·
-    <a href="#licencia">Licencia</a>
+    <a href="#menciones-honorables">Menciones honorables</a>
 </p>
 
 ## Qué es esto
@@ -75,7 +74,3 @@ Los datos (ajustes, voces descargadas, caché y log) van en `data/`, junto al ej
 - [espeak-ng](https://github.com/espeak-ng/espeak-ng) — la fonemización, aquí en su versión WASM.
 - [onnxruntime](https://onnxruntime.ai/) — ejecuta el modelo de voz.
 - [Model Context Protocol](https://modelcontextprotocol.io/) — el protocolo por el que Claude Code habla con la app.
-
-## Licencia
-
-Este código es [MIT](./LICENSE). Las dependencias tienen la suya: espeak-ng es GPL-3.0, así que el paquete que genera el build la arrastra.
