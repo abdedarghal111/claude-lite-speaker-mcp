@@ -1,4 +1,5 @@
-export const DEFAULT_VOICE = "es_ES-davefx-medium"
+// null: la app arranca sin voz hasta que haya una descargada en disco.
+export const DEFAULT_VOICE = null
 
 // Velocidad como multiplicador (1.0 = normal, 2.0 = el doble de rápido).
 export const DEFAULT_SPEED = 1.0
