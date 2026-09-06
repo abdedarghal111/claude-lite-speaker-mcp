@@ -143,6 +143,9 @@ export class Chat {
         }
         const text = sanitizeForSpeech(trimmed)
         const voice = AppSettings.read("voice")
+        if (!voice) {
+            throw new Error("No hay ninguna voz instalada. Descarga una desde el panel de voces.")
+        }
         const speed = AppSettings.read("speed")
         const notification = AppSettings.read("notification")
         const volume = AppSettings.read("volume")
