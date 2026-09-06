@@ -54,9 +54,10 @@ export class Chat {
         if (this.#currentJob || this.#jobs.length === 0) {
             return
         }
-        this.#currentJob = this.#jobs.shift()
-        this.#runJob(this.#currentJob)
-            .catch((err) => Logger.logError(err))
+        const job = this.#jobs.shift()
+        this.#currentJob = job
+        this.#runJob(job)
+            .catch((err) => Logger.error("chat:queue", "La cola de reproducción se rompió; el audio pendiente se descarta.", err))
             .finally(() => {
                 this.#currentJob = null
                 this.#pump()
@@ -113,7 +114,7 @@ export class Chat {
         }
 
         if (job.synthError) {
-            Logger.logError(job.synthError)
+            Logger.error("chat:synth", "No se pudo sintetizar el texto; ese fragmento no se leerá.", job.synthError)
             return this.#closeStreakIfDrained(job, !cutOff)
         }
         const audio = cutOff ? null : await job.synthPromise

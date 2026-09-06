@@ -27,10 +27,13 @@ export class MCP {
             this.httpServer.on("error", (err) => {
                 if (err.code === "EADDRINUSE") {
                     // Puerto ya en uso: probablemente otra instancia viva, este proceso sale.
-                    Logger.logError(`puerto ${AUDIO_SERVER_HTTP_PORT} ya en uso (¿otra instancia viva?), saliendo.`)
+                    Logger.error(
+                        "mcp:server",
+                        `El puerto ${AUDIO_SERVER_HTTP_PORT} ya está en uso; probablemente ya hay otra instancia abierta. Esta se cierra.`
+                    )
                     return process.exit(0)
                 }
-                Logger.logError(err)
+                Logger.error("mcp:server", `El servidor MCP falló escuchando en el puerto ${AUDIO_SERVER_HTTP_PORT}.`, err)
             })
         })
     }
