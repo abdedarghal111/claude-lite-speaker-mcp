@@ -74,6 +74,9 @@ export class MCP {
     // descriptivo del resultado.
     speak(text) {
         const voice = AppSettings.read("voice")
+        if (!voice) {
+            return "No hay ninguna voz instalada. Descárgala desde el panel de voces de la ventana de ajustes."
+        }
         if (!VoicesManager.voiceFilesReady(voice)) {
             return `La voz "${voice}" no está descargada. Descárgala desde el panel de voces de la ventana de ajustes.`
         }

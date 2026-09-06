@@ -121,6 +121,9 @@ export class VoicesManager {
     }
 
     static voiceFilesReady(voiceId) {
+        if (!voiceId) {
+            return false
+        }
         const { onnxPath, jsonPath } = VoicesManager.#voicePaths(voiceId)
         return fs.existsSync(onnxPath) && fs.existsSync(jsonPath)
     }
