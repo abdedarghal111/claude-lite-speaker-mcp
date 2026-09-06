@@ -150,7 +150,7 @@ export class App {
 
     // Tabla de errores en memoria, para el panel de Avisos.
     cmdDebugLog() {
-        return { ok: true, result: Logger.errors }
+        return { ok: true, result: Logger.entries }
     }
 
     // Valida y activa una voz (coordina VoicesManager y AppSettings).

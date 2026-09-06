@@ -1,38 +1,71 @@
-// Errores de la app: una tabla en memoria para el panel de Avisos y una copia en
-// disco para depurar a mano.
+// Registro de la app: una tabla en memoria para la ventana de ajustes y un
+// fichero con la traza completa para depurar a mano.
 import fs from "node:fs"
 import { DATA_DIR, ERROR_LOG_FILE } from "../paths.js"
 
-// El proceso vive mucho tiempo en segundo plano, así que la tabla no crece sin fin.
-const MAX_ERRORS_IN_MEMORY = 200
-
 export class Logger {
-    static #errors = []
+    static #entries = []
+    static #seq = 0
 
-    // Último error ya formateado, para cmdStatus().
-    static get lastError() {
-        const last = Logger.#errors.at(-1)
-        return last ? last.text : ""
+    // error: se le avisa al usuario (ver class/Notifier.js). warn: solo registro.
+    static error(source, message, cause) {
+        return Logger.#add("error", source, message, cause)
     }
 
-    // Tabla entera, más reciente primero.
-    static get errors() {
-        return [...Logger.#errors].reverse()
+    static warn(source, message, cause) {
+        return Logger.#add("warn", source, message, cause)
     }
 
-    static logError(err) {
+    // source: "modulo:accion". message: la frase que lee el usuario, con los
+    // datos del fallo dentro. cause: la excepción tal cual llega al catch.
+    static #add(level, source, message, cause) {
         const time = new Date()
-        const text = `[${time.toISOString()}] ${err?.stack || err}`
-        const message = err?.message || String(err)
-        Logger.#errors.push({ time, message, text })
-        if (Logger.#errors.length > MAX_ERRORS_IN_MEMORY) {
-            Logger.#errors.shift()
+        const entry = {
+            seq: ++Logger.#seq,
+            time,
+            level,
+            source,
+            message,
+            text: `[${time.toISOString()}] ${level.toUpperCase()} ${source} — ${message}`,
         }
 
-        if (!fs.existsSync(DATA_DIR)) {
-            fs.mkdirSync(DATA_DIR, { recursive: true })
-        }
+        Logger.#entries.push(entry)
 
-        fs.appendFileSync(ERROR_LOG_FILE, text + "\n")
+        // La traza va solo al fichero. Si no hay excepción, apunta a la línea
+        // que llamó al Logger.
+        const origin = new Error(message)
+        // level es "error" o "warn", el mismo nombre que el método público:
+        // así la traza empieza en quien lo llamó, no dentro del Logger.
+        Error.captureStackTrace(origin, Logger[level])
+        Logger.#write(`${entry.text}\n${cause?.stack || origin.stack}\n\n`)
+
+        return entry
+    }
+
+    static #write(text) {
+        fs.mkdirSync(DATA_DIR, { recursive: true })
+        const stats = fs.statSync(ERROR_LOG_FILE, { throwIfNoEntry: false })
+        if (stats && !stats.isFile()) {
+            throw new Error(`El registro no puede escribir en el fichero ${ERROR_LOG_FILE}: no es un fichero.`)
+        }
+        fs.appendFileSync(ERROR_LOG_FILE, text)
+    }
+
+    // Más reciente primero, para la ventana de ajustes.
+    static get entries() {
+        return [...Logger.#entries].reverse()
+    }
+
+    static get lastError() {
+        return Logger.#entries.findLast((entry) => entry.level === "error")?.text ?? ""
+    }
+
+    // Lo registrado después de fromSeq, en orden de llegada.
+    static since(fromSeq) {
+        return Logger.#entries.filter((entry) => entry.seq > fromSeq)
+    }
+
+    static get lastSeq() {
+        return Logger.#seq
     }
 }

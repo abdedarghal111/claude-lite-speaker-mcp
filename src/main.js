@@ -7,7 +7,7 @@ const { Logger } = await import("./class/Logger.js")
 
 // Registra con traza cualquier error no controlado y termina el proceso.
 function fatal(err) {
-  Logger.logError(err instanceof Error ? err : new Error(String(err)))
+  Logger.error("app:fatal", `Error no controlado; la aplicación se cierra: ${err?.message ?? err}`, err)
   process.exit(1)
 }
 process.on("unhandledRejection", fatal)
