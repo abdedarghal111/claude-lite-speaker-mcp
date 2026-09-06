@@ -78,9 +78,11 @@ export class MCP {
     speak(text) {
         const voice = AppSettings.read("voice")
         if (!voice) {
+            Logger.error("mcp:speak", "Se ha pedido leer un texto en voz alta, pero no hay ninguna voz activa.")
             return "No hay ninguna voz instalada. Descárgala desde el panel de voces de la ventana de ajustes."
         }
         if (!VoicesManager.voiceFilesReady(voice)) {
+            Logger.error("mcp:speak", `Se ha pedido leer un texto en voz alta, pero la voz "${voice}" no está descargada.`)
             return `La voz "${voice}" no está descargada. Descárgala desde el panel de voces de la ventana de ajustes.`
         }
         const { speed, notification, volume } = this.app.chat.speak(text)
