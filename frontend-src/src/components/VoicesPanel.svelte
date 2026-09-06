@@ -37,6 +37,11 @@
 
     const view = $derived(listVoices(debounced))
 
+    // Sin catálogo y sin voces en disco no hay nada que hacer salvo descargarlo.
+    const needsCatalog = $derived(
+        !voices.data.catalogAvailable && !voices.refreshingCatalog && voices.data.downloaded.length === 0
+    )
+
     function metaOf(voice) {
         return [voice.language_name || voice.language, voice.quality, voice.sizeMb != null ? `${voice.sizeMb} MB` : null]
             .filter(Boolean)
@@ -49,7 +54,17 @@
         <h2 class="m-0 text-[13px] font-[650] text-text">Voces</h2>
         <button
             type="button"
-            class="flex h-7 w-7 flex-none cursor-pointer items-center justify-center rounded-[9px] border border-line bg-panel text-muted transition hover:border-line-hi hover:bg-white hover:text-text disabled:cursor-default disabled:opacity-55"
+            class="flex h-7 w-7 flex-none cursor-pointer items-center justify-center rounded-[9px] border transition disabled:cursor-default disabled:opacity-55"
+            class:border-line={!needsCatalog}
+            class:bg-panel={!needsCatalog}
+            class:text-muted={!needsCatalog}
+            class:hover:border-line-hi={!needsCatalog}
+            class:hover:bg-white={!needsCatalog}
+            class:hover:text-text={!needsCatalog}
+            class:border-red={needsCatalog}
+            class:bg-red={needsCatalog}
+            class:text-onred={needsCatalog}
+            class:animate-pulse={needsCatalog}
             title="Descargar catálogo de voces"
             disabled={voices.refreshingCatalog}
             onclick={refreshCatalog}>
@@ -112,9 +127,19 @@
 
     <div class="scroll-hidden max-h-64.5 overflow-y-auto">
         {#if !voices.onlyDownloaded && !voices.data.catalogAvailable}
-            <p class="mx-0.5 my-1 text-[11.5px] text-muted">
-                No hay catálogo de voces descargado todavía. Usa el botón de arriba para descargarlo.
-            </p>
+            <div class="flex flex-col items-start gap-2 px-0.5 py-1">
+                <p class="m-0 text-[11.5px] text-muted">
+                    No hay catálogo de voces descargado todavía. Descárgalo para ver las voces disponibles.
+                </p>
+                <button
+                    type="button"
+                    class="{BTN_PRIMARY} flex-none px-3 py-2 text-[11.5px]"
+                    class:animate-pulse={needsCatalog}
+                    disabled={voices.refreshingCatalog}
+                    onclick={refreshCatalog}>
+                    {voices.refreshingCatalog ? "Descargando catálogo…" : "Descargar catálogo"}
+                </button>
+            </div>
         {:else if view.entries.length === 0}
             <p class="mx-0.5 my-1 text-[11.5px] text-muted">
                 {voices.onlyDownloaded
@@ -145,6 +170,7 @@
                             <button
                                 type="button"
                                 class="{BTN_PRIMARY} {VOICE_BTN}"
+                                class:animate-pulse={!voices.data.currentVoice}
                                 onclick={() => runVoiceAction("use", voice.id)}>Usar</button>
                         {:else}
                             <button
