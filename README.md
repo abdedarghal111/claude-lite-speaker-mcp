@@ -22,6 +22,8 @@ Todo ocurre en tu máquina: la síntesis es local, no hay llamadas a APIs extern
 
 Para que Claude Code lo use hace falta, además de tener esto corriendo, el plugin que vive en [claude-lite-speaker-plugin](https://github.com/abdedarghal111/claude-lite-speaker-plugin).
 
+Usándolo se nota una ventaja que no se esperaba: como el agente tiene que resumir lo que hace para decirlo en voz alta, el trato con él se vuelve mucho más claro y fluido. Escuchas el resumen mientras miras los datos en pantalla, en vez de leer todo el rato. Y todo eso sin contar que te va comunicando cada cambio que hace.
+
 ⚠️ **Solo probado en Windows.** El código es multiplataforma y el build de macOS y Linux está escrito, pero sin verificar.
 
 ## Funcionalidades
