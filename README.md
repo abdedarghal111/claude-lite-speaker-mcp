@@ -39,10 +39,10 @@ Usándolo se nota una ventaja que no se esperaba: como el agente tiene que resum
 Hace falta [Node](https://nodejs.org) 26 o superior y [pnpm](https://pnpm.io).
 
 ```bash
-pnpm install    # una vez
-pnpm dev        # arranca la app con las devtools abiertas
-pnpm build      # genera el ejecutable de este sistema
-pnpm clean      # borra .build, la carpeta de trabajo del build
+pnpm install         # una vez
+pnpm dev             # compila la interfaz y arranca la app con las devtools abiertas
+pnpm build           # genera el ejecutable de este sistema
+pnpm clean           # borra .build, la carpeta de trabajo del build
 ```
 
 `pnpm build` construye la app en `.build/` y deja el zip en `out/`, para el sistema desde el que se lanza y siempre en x64 (amd64).
@@ -58,13 +58,15 @@ Aquí no hay nada que configurar: al activar el [plugin](https://github.com/abde
 | Síntesis | `src/class/AudioEngine.js` | El pipeline de Piper reescrito en JS: espeak-ng (WASM) saca los fonemas, el modelo VITS de la voz los convierte en audio con onnxruntime |
 | Reproducción | `src/class/AudioOutput.js`, `src/class/Chat.js` | Cola por cliente y salida con node-web-audio-api |
 | Voces | `src/class/VoicesManager.js` | Catálogo remoto y ficheros de voz en disco |
-| Interfaz | `frontend/` | HTML, CSS y JS planos, sin framework |
+| Interfaz | `frontend-src/` | Svelte 5 y Tailwind 4, compilados con Vite a `frontend/` |
 
 Lo que sale del build es el propio binario de Node con un script de arranque inyectado dentro (el SEA nativo, `node --build-sea`), y a su lado, en la misma carpeta, el código fuente y las dependencias que va a ejecutar. Por eso hay dos entradas: `src/exe-entry.cjs` viaja dentro del binario y `src/app-entry.cjs` es ya un fichero normal del disco, que es quien puede cargar `main.js`.
 
 Con eso hecho, el postbuild de cada sistema (`scripts/lib/`) maquilla ese binario para que parezca lo que es: le pone el nombre y el icono de la app, le quita la consola en Windows, lo mete en un bundle `.app` firmado en macOS o le añade el `.desktop` en Linux. Y al final empaqueta la carpeta entera en el zip.
 
 **Solo probado en Windows.** El build de macOS y el de Linux están escritos pero sin verificar.
+
+La interfaz es lo único que se compila aparte: la fuente vive en `frontend-src/` y `vite build` la deja en `frontend/`, que está fuera de git y es la carpeta que se empaqueta. `pnpm build` la reconstruye antes de generar el ejecutable, así que no hace falta acordarse.
 
 Los datos (ajustes, voces descargadas, caché y log) van en `data/`, junto al ejecutable, así que la app es portable y se desinstala borrando su carpeta.
 
