@@ -92,8 +92,24 @@ export class VoicesManager {
             return []
         }
         return Object.values(catalog)
-            .map((v) => ({ id: v.key, language: v.language?.code, language_name: v.language?.name_english, quality: v.quality }))
+            .map((v) => ({
+                id: v.key,
+                language: v.language?.code,
+                language_name: v.language?.name_english,
+                quality: v.quality,
+                // El tamaño de la voz es el del modelo: el resto de ficheros no llega al megabyte.
+                sizeMb: VoicesManager.#modelSizeMb(v.files),
+            }))
             .sort((a, b) => a.id.localeCompare(b.id))
+    }
+
+    // Megabytes del .onnx que anuncia el catálogo; null si la entrada no lo trae.
+    static #modelSizeMb(files) {
+        const model = Object.entries(files ?? {}).find(([name]) => name.endsWith(".onnx"))
+        if (!model?.[1]?.size_bytes) {
+            return null
+        }
+        return Math.round((model[1].size_bytes / (1024 * 1024)) * 10) / 10
     }
 
     // Rutas de los dos ficheros de una voz (modelo y configuración).

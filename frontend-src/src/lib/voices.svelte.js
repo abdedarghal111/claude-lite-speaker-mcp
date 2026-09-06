@@ -48,7 +48,8 @@ export function listVoices(search) {
         const filtered = catalog.filter((v) => matches(v, query))
         const entries = filtered
             .slice(0, LIST_LIMIT)
-            .map((v) => ({ ...v, sizeMb: localSize.get(v.id) ?? null }))
+            // El tamaño en disco manda sobre el que anuncia el catálogo.
+            .map((v) => ({ ...v, sizeMb: localSize.get(v.id) ?? v.sizeMb }))
         return { entries, truncated: filtered.length - entries.length }
     }
 
