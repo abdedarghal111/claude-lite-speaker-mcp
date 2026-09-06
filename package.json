@@ -2,6 +2,7 @@
   "name": "claude-lite-speaker",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "author": {
     "name": "Abderrahim Darghal Belkacemi",
