@@ -48,15 +48,12 @@ export class MCP {
             "speak",
             {
                 description:
-                    "Convierte el texto dado en voz y lo reproduce" +
-                    " usando la voz, velocidad, volumen y ding " +
-                    "configurados actualmente en la app de bandeja del escritorio — no se pueden ajustar " +
-                    "desde aquí, esa configuración solo se cambia desde esa app. Si ya hay algo sonando, este " +
-                    "audio se encola detrás y suena en su turno. El modelo que convierte el texto en voz es " +
-                    "ligero, así que para que se entienda bien usa palabras sencillas y frecuentes, frases " +
-                    "cortas, el mismo idioma en el que se está hablando, y sin símbolos raros que no se " +
-                    "pronuncien con naturalidad. Úsala cuando el usuario pida explícitamente que se lea algo " +
-                    "en voz alta ahora mismo.",
+                    "Lee el texto dado en voz alta en el equipo del usuario, con la voz, velocidad, " +
+                    "volumen y ding configurados en la app de bandeja del escritorio — esos ajustes no se " +
+                    "cambian desde aquí. Si ya hay algo sonando, este audio se encola detrás y suena en su " +
+                    "turno. El modelo que convierte el texto en voz es ligero, así que para que se entienda " +
+                    "bien usa palabras sencillas y frecuentes, frases cortas, el mismo idioma en el que se " +
+                    "está hablando, y sin símbolos raros que no se pronuncien con naturalidad.",
                 inputSchema: {
                     text: z.string().describe("Texto a sintetizar y reproducir."),
                 },
