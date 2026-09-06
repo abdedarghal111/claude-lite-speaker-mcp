@@ -7,75 +7,175 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <div class="head">
+  <div class="topstrip"></div>
+
+  <div class="header-row">
     <img class="mark" src="icons/appIcon.png" alt="" />
-    <div>
+    <div class="header-info">
       <h1>Claude Lite Speaker</h1>
-      <p id="status">Conectando con el servidor de audio…</p>
+      <div class="status-line">
+        <span id="statusDot" class="status-dot"></span>
+        <span id="status" class="status-text">Conectando con el servidor de audio…</span>
+      </div>
     </div>
   </div>
 
-  <label class="row">
-    <input type="checkbox" id="notification" />
-    Ding de aviso
-  </label>
-
-  <label class="row">
-    <input type="checkbox" id="autostart" />
-    Autoarranque
-  </label>
-
-  <label class="row">
-    Velocidad: <span id="speedValue">1.0x</span>
-    <input type="range" id="speed" step="0.1" />
-  </label>
-
-  <label class="row">
-    Volumen: <span id="volumeValue">100%</span>
-    <input type="range" id="volume" step="1" />
-  </label>
-
-  <p class="voice">Voz actual: <span id="voice">—</span></p>
-
-  <input
-    type="text"
-    id="speakTestText"
-    class="speak-test-input"
-    value="Hola, así sueno ahora mismo."
-    placeholder="Escribe algo para escucharlo..."
-  />
-  <div class="test-buttons">
-    <button id="speakTest">Probar voz</button>
-    <button id="speakStop" class="secondary" disabled>Parar</button>
+  <div class="tabbar">
+    <button type="button" id="tabGeneral" class="tab-btn active" data-tab="general">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h2l2-7 3 14 3-10 2 5h6"/></svg>
+      General
+    </button>
+    <button type="button" id="tabVoces" class="tab-btn" data-tab="voces">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="4" height="4" rx="1"/><rect x="3" y="10" width="4" height="4" rx="1"/><rect x="3" y="16" width="4" height="4" rx="1"/><path d="M10 6h11M10 12h11M10 18h11"/></svg>
+      Voces
+    </button>
+    <button type="button" id="tabAvisos" class="tab-btn" data-tab="avisos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0"/></svg>
+      Avisos
+      <span id="tabBadge" class="tab-badge" data-count="0">0</span>
+    </button>
   </div>
 
-  <section class="voices-panel">
-    <div class="voices-panel-head">
-      <h2>Voces</h2>
-      <label class="checkbox-inline">
-        <input type="checkbox" id="onlyDownloaded" checked />
-        Solo descargadas
+  <div class="content">
+
+    <!-- Voz actual + prueba de voz: visible en General y Voces, oculta en
+         Avisos (ver wireTabs() en js/main.js, que le pone/quita "hidden"). -->
+    <section id="voiceTop" class="card">
+      <div class="voice-now">
+        <span class="label">Voz actual</span>
+        <span id="voice" class="value">—</span>
+      </div>
+      <div class="speak-row">
+        <input
+          type="text"
+          id="speakTestText"
+          class="speak-input"
+          value="Hola, así sueno ahora mismo."
+          placeholder="Escribe algo para escucharlo..."
+        />
+        <div class="speak-buttons">
+          <button type="button" id="speakTest" class="btn-primary">Probar voz</button>
+          <button type="button" id="speakStop" class="btn-secondary" disabled>Parar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pestaña General: ajustes de reproducción + preferencias que antes
+         iban sueltas en la ventana. -->
+    <section id="panelGeneral" class="card">
+      <div class="control">
+        <div class="control-head"><span>Velocidad</span><span id="speedValue" class="control-val">1.0x</span></div>
+        <!-- min/max se fijan en tiempo de ejecución desde status (limits),
+             que a su vez viene de src/values/constants.js: no hay números de
+             negocio hardcodeados aquí, ver applyLimits() en js/main.js. -->
+        <input type="range" id="speed" step="0.1" />
+      </div>
+      <div class="control">
+        <div class="control-head"><span>Volumen</span><span id="volumeValue" class="control-val">100%</span></div>
+        <input type="range" id="volume" step="1" />
+      </div>
+      <hr />
+      <label class="switch-row">
+        <span class="switch-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0"/></svg>
+          Ding de aviso
+        </span>
+        <span class="switch"><input type="checkbox" id="notification" /><span class="track"></span><span class="thumb"></span></span>
       </label>
-    </div>
+      <label class="switch-row">
+        <span class="switch-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v8"/><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/></svg>
+          Autoarranque
+        </span>
+        <span class="switch"><input type="checkbox" id="autostart" /><span class="track"></span><span class="thumb"></span></span>
+      </label>
+      <hr />
+      <button type="button" id="openDevtoolsBtn" class="link-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m8 9-3 3 3 3M13 8l-2 8"/></svg>
+        Abrir herramientas de desarrollador
+      </button>
+    </section>
 
-    <button type="button" id="refreshCatalogBtn" class="secondary">Descargar catálogo de voces</button>
+    <!-- Pestaña Voces: catálogo, con el mismo panel de arriba siempre visible. -->
+    <section id="panelVoces" class="voices-block" hidden>
+      <div class="voices-head">
+        <h2>Voces</h2>
+        <!-- La app nunca descarga el catálogo remoto sola: solo con este botón
+             explícito (ver refreshVoiceCatalog en class/App.js). -->
+        <button type="button" id="refreshCatalogBtn" class="icon-btn" title="Descargar catálogo de voces">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16"/><path d="M8 16H3v5"/></svg>
+        </button>
+      </div>
 
-    <input
-      type="text"
-      id="voiceFilter"
-      class="voice-filter"
-      placeholder="Buscar por id o idioma (es, en_US, davefx...)"
-      hidden
-    />
+      <div id="downloadsProgress" class="downloads-progress"></div>
 
-    <div id="downloadsProgress" class="downloads-progress"></div>
+      <div class="segmented">
+        <button type="button" id="segDownloaded" class="seg-btn active" data-seg="downloaded">Descargadas</button>
+        <button type="button" id="segCatalog" class="seg-btn" data-seg="catalog">Catálogo</button>
+      </div>
 
-    <div id="voiceList" class="voice-list">
-      <p class="voice-list-empty">Buscando voces…</p>
-    </div>
-  </section>
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-3.6-3.6"/></svg>
+        <input
+          type="text"
+          id="voiceFilter"
+          class="search-input"
+          placeholder="Buscar por id o idioma (es, en_US, davefx...)"
+        />
+      </div>
 
-  <button type="button" id="openDevtoolsBtn" class="secondary">Abrir herramientas de desarrollador</button>
+      <div class="voice-list-scroll">
+        <div id="voiceList" class="voice-list">
+          <p class="voice-list-empty">Buscando voces…</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pestaña Avisos: bandeja de notificaciones (toast + histórico corto).
+         Sustituye a los "Error: ..." que antes se escribían encima de #status
+         y desaparecían con el siguiente refresco; ver notifyError() en js/main.js. -->
+    <section id="panelAvisos" class="card" hidden>
+      <div class="avisos-head">
+        <h2>Avisos</h2>
+        <button type="button" id="clearAllBtn">Vaciar todo</button>
+      </div>
+      <div id="notifChips" class="notif-chips"></div>
+      <div id="notifScroll" class="notif-scroll voice-list-scroll"></div>
+      <div class="notif-foot">
+        <!-- Ya no abre un modal aparte: cambia a la pestaña "Registro de
+             errores" (ver wireTabs()/openLogsFromAvisos en js/main.js). -->
+        <button type="button" id="openLogsFromAvisos" class="link-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m8 9-3 3 3 3M13 8l-2 8"/></svg>
+          Ver registro de errores
+        </button>
+      </div>
+    </section>
+
+    <!-- Pestaña Registro de errores: tabla de Logger tal cual está en
+         memoria del proceso backend (no el fichero en disco, ver
+         cmdDebugLog en App.js): solo errores reales, no el ruido de avisos
+         de interfaz que sí vive en la pestaña Avisos. Antes era un modal
+         aparte: al vivir dentro de .content igual que las demás pestañas,
+         el scroll lo da la propia página en vez de un contenedor flex
+         anidado sin "min-height: 0" (esa era la causa de que los registros
+         más antiguos quedasen fuera de la vista, sin forma de llegar a
+         ellos). -->
+    <section id="panelLogs" class="card" hidden>
+      <div class="avisos-head">
+        <h2>Registro de errores</h2>
+        <span id="logCount" class="sub">0 errores</span>
+      </div>
+      <div class="log-toolbar">
+        <input type="text" id="logSearch" class="log-search" placeholder="Buscar por mensaje…" />
+      </div>
+      <div id="logTable" class="log-table"></div>
+    </section>
+
+  </div>
+
+  <!-- Toasts: nacen abajo con forma de tarjeta (igual que en Avisos), con
+       márgenes laterales y barra de tiempo pausable. -->
+  <div id="toastDock" class="toast-dock"></div>
 
   <script src="js/main.js"></script>
 </body>

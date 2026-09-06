@@ -9,34 +9,55 @@
   --text: #3d332c;
   --muted: #8d8075;
   --warn: #c8791f;
+  /* Severidad de la bandeja de avisos (toast + panel de logs). --red se
+     reserva para la marca/acciones primarias, así que el error usa un tono
+     propio en vez de reutilizarlo. */
+  --sev-error: #ab3b2c;
+  --sev-warn: #c8791f;
+  --sev-ok: #6f8f5c;
+  --sev-info: #5f7a8c;
 }
 
 * {
   box-sizing: border-box;
 }
 
+/* .card y .voices-block fijan su propio "display" sin !important, y eso
+   pisa la regla del user-agent para [hidden] (misma especificidad, gana
+   la hoja de autor). Sin esto los paneles no llegaban a ocultarse nunca. */
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
 body {
   font-family: system-ui, -apple-system, sans-serif;
-  padding: 20px;
-  margin: 0;
   color: var(--text);
   background: var(--bg);
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
 }
 
-body::before {
-  content: "";
-  display: block;
+.topstrip {
   height: 5px;
   background: var(--red);
-  margin: -20px -20px 20px;
+  flex: none;
 }
 
-.head {
+/* ---- Cabecera: icono + nombre + estado en vivo ---- */
+
+.header-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 18px;
+  padding: 18px 20px 14px;
+  flex: none;
 }
 
 .mark {
@@ -49,6 +70,11 @@ body::before {
   box-shadow: 0 2px 6px rgba(61, 51, 44, 0.12);
 }
 
+.header-info {
+  flex: 1;
+  min-width: 0;
+}
+
 h1 {
   font-size: 16px;
   margin: 0 0 3px;
@@ -56,165 +82,382 @@ h1 {
   color: var(--text);
 }
 
-#status {
-  font-size: 11px;
-  color: var(--muted);
-  margin: 0;
-}
-
-.row {
+.status-line {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-  padding: 12px 13px;
+  gap: 6px;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex: none;
+}
+
+/* Se activa por JS (ver main.js) mientras el servidor está reproduciendo audio. */
+.status-dot.playing {
+  background: var(--red);
+  box-shadow: 0 0 0 3px rgba(185, 97, 79, 0.18);
+}
+
+.status-text {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ---- Pestañas: General / Voces ---- */
+
+.tabbar {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(61, 51, 44, 0.06);
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  border-radius: 11px;
+  margin: 0 20px 14px;
+  flex: none;
 }
 
-/* Mini explicación bajo un .row, para controles cuyo nombre solo no basta. */
-.hint {
-  font-size: 11.5px;
-  line-height: 1.4;
+.tab-btn {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 0;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 650;
   color: var(--muted);
-  margin: -4px 2px 12px;
+  cursor: pointer;
 }
 
-.row:hover {
-  box-shadow: 0 4px 14px rgba(61, 51, 44, 0.1);
-  transform: translateY(-1px);
+.tab-btn.active {
+  background: var(--red);
+  color: var(--onred);
 }
 
-input[type="checkbox"] {
-  accent-color: var(--red);
+.tab-btn svg {
   width: 15px;
   height: 15px;
 }
 
-input[type="range"] {
+.content {
   flex: 1;
-  accent-color: var(--red);
-  height: 4px;
+  overflow-y: auto;
+  padding: 0 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  /* Scroll sin barra visible, igual que .voice-list-scroll: el gesto de
+     scroll sigue funcionando, solo se oculta el slider lateral. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.content::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---- Tarjetas: reproducción y preferencias ---- */
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 15px;
+  box-shadow: 0 2px 8px rgba(61, 51, 44, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: none;
+}
+
+.voice-now {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.label {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.value {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.control {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.control-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.control-val {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Volumen por encima del original (zona de peligro, ver main.js). */
-#volumeValue.danger {
+.control-val.danger {
   color: var(--warn);
   font-weight: 700;
 }
 
-.voice {
-  font-size: 13px;
-  color: var(--muted);
-}
-
-#voice {
-  color: var(--text);
-  font-weight: 600;
-}
-
-button {
-  margin-top: 4px;
-  padding: 11px 16px;
-  border: none;
-  border-radius: 10px;
-  background: var(--red);
-  color: var(--onred);
-  font-weight: 650;
-  font-size: 13px;
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease;
-}
-
-button:hover {
-  background: var(--red-hi);
-}
-
-button:active {
-  transform: scale(0.97);
-}
-
-button:disabled {
-  opacity: 0.55;
-  cursor: default;
-  transform: none !important;
-}
-
-.test-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-.test-buttons button {
-  flex: 1;
-  margin-top: 4px;
-}
-
-.test-buttons button.secondary {
-  background: var(--line);
-  color: var(--text);
-}
-
-.test-buttons button.secondary:hover {
-  background: #d8c9b4;
-}
-
-/* ---- Panel de voces: descargas en curso + voces descargadas/catálogo ---- */
-
-.voices-panel {
-  margin-top: 16px;
-}
-
-.voices-panel-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.voices-panel-head h2 {
-  font-size: 13px;
-  margin: 0;
-  font-weight: 650;
-  color: var(--text);
-}
-
-.checkbox-inline {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
-  color: var(--muted);
-  cursor: pointer;
-}
-
-.checkbox-inline input {
+input[type="range"] {
   accent-color: var(--red);
-  width: 13px;
-  height: 13px;
+  height: 4px;
+  width: 100%;
+  margin: 0;
 }
 
-.voice-filter,
-.speak-test-input {
-  display: block;
+.speak-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.speak-input {
   width: 100%;
-  margin-bottom: 8px;
-  padding: 8px 10px;
+  padding: 9px 11px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--panel);
+  background: #fff;
   color: var(--text);
   font-size: 12px;
   font-family: inherit;
 }
 
-.voice-filter:focus,
-.speak-test-input:focus {
+.speak-input:focus {
   outline: 2px solid var(--red);
   outline-offset: -1px;
+}
+
+.speak-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-primary,
+.btn-secondary {
+  border: none;
+  border-radius: 10px;
+  font-weight: 650;
+  font-size: 13px;
+  padding: 10px 14px;
+  cursor: pointer;
+  flex: 1;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.btn-primary {
+  background: var(--red);
+  color: var(--onred);
+}
+
+.btn-primary:hover {
+  background: var(--red-hi);
+}
+
+.btn-secondary {
+  background: var(--line);
+  color: var(--text);
+}
+
+.btn-secondary:hover {
+  background: #d8c9b4;
+}
+
+.btn-primary:active,
+.btn-secondary:active {
+  transform: scale(0.97);
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: 0.55;
+  cursor: default;
+  transform: none !important;
+}
+
+/* Ding de aviso / Autoarranque, como interruptores dentro de la tarjeta General. */
+
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.switch-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.switch-label svg {
+  width: 15px;
+  height: 15px;
+  color: var(--muted);
+  flex: none;
+}
+
+.switch {
+  position: relative;
+  width: 36px;
+  height: 21px;
+  flex: none;
+}
+
+.switch input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+
+.switch .track {
+  position: absolute;
+  inset: 0;
+  background: var(--line);
+  border-radius: 11px;
+  transition: background 0.15s ease;
+}
+
+.switch .thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(61, 51, 44, 0.3);
+  transition: transform 0.15s ease;
+}
+
+.switch input:checked + .track {
+  background: var(--red);
+}
+
+.switch input:checked ~ .thumb {
+  transform: translateX(15px);
+}
+
+.card hr {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 0;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.link-btn:hover {
+  color: var(--red);
+}
+
+.link-btn svg {
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+  flex: none;
+}
+
+/* ---- Panel de voces: descargas en curso + voces descargadas/catálogo ---- */
+
+.voices-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.voices-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+h2 {
+  font-size: 13px;
+  margin: 0;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.icon-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.icon-btn:hover {
+  background: #fff;
+  color: var(--text);
+  border-color: #d8c9b4;
+}
+
+.icon-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.icon-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.icon-btn.spinning svg {
+  animation: icon-spin 0.9s linear infinite;
+}
+
+@keyframes icon-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .downloads-progress {
@@ -224,7 +467,7 @@ button:disabled {
 }
 
 .downloads-progress:not(:empty) {
-  margin-bottom: 8px;
+  margin-bottom: -2px;
 }
 
 .download-item {
@@ -284,9 +527,80 @@ button:disabled {
   }
 }
 
-.voice-list {
-  max-height: 230px;
+.segmented {
+  display: flex;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 3px;
+  gap: 3px;
+  flex: none;
+}
+
+.seg-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 7px 0;
+  border-radius: 7px;
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.seg-btn.active {
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(61, 51, 44, 0.12);
+}
+
+.search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+
+.search-wrap svg {
+  position: absolute;
+  left: 10px;
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 10px 8px 30px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.search-input:focus {
+  outline: 2px solid var(--red);
+  outline-offset: -1px;
+}
+
+/* Scroll de la lista de voces sin barra visible (el gesto de scroll sigue
+   funcionando; ver "estilo de display" elegido en el rediseño). */
+.voice-list-scroll {
+  max-height: 258px;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.voice-list-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.voice-list {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -305,7 +619,7 @@ button:disabled {
   align-items: center;
   gap: 8px;
   padding: 9px 11px;
-  background: var(--panel);
+  background: #fff;
   border: 1px solid var(--line);
   border-radius: 9px;
 }
@@ -337,16 +651,494 @@ button:disabled {
 
 .voice-item button {
   flex: none;
-  margin: 0;
   padding: 6px 11px;
   font-size: 11px;
 }
 
-.voice-item button.secondary {
-  background: var(--line);
+/* ---- Numerito de no leídos sobre la pestaña "Avisos" ---- */
+
+.tab-badge {
+  position: absolute;
+  top: -5px;
+  right: 8px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--red);
+  color: var(--onred);
+  font-size: 9.5px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px var(--panel);
+  transition: transform 0.15s ease;
+}
+
+.tab-badge[data-count="0"] {
+  display: none;
+}
+
+/* La pestaña activa es roja: se invierte el badge para que siga leyéndose. */
+.tab-btn.active .tab-badge {
+  background: var(--onred);
+  color: var(--red);
+  box-shadow: 0 0 0 2px var(--red);
+}
+
+.tab-badge.bump {
+  animation: badge-bump 0.3s ease;
+}
+
+@keyframes badge-bump {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ---- Chips de severidad, reutilizados en Avisos y en el panel de logs ---- */
+
+.sev-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex: none;
+}
+
+.sev-chip.error {
+  background: rgba(171, 59, 44, 0.13);
+  color: var(--sev-error);
+}
+
+.sev-chip.warn {
+  background: rgba(200, 121, 31, 0.14);
+  color: var(--sev-warn);
+}
+
+.sev-chip.info {
+  background: rgba(95, 122, 140, 0.14);
+  color: var(--sev-info);
+}
+
+.sev-chip.ok {
+  background: rgba(111, 143, 92, 0.14);
+  color: var(--sev-ok);
+}
+
+/* ---- Pestaña Avisos: filtros + histórico agrupado por día ---- */
+
+.avisos-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.avisos-head button {
+  border: none;
+  background: none;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.avisos-head button:hover {
+  color: var(--red);
+}
+
+.notif-chips {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  flex: none;
+  padding-bottom: 1px;
+}
+
+.notif-chip {
+  flex: none;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 10.5px;
+  font-weight: 650;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.notif-chip.active {
+  background: var(--text);
+  color: var(--panel);
+  border-color: var(--text);
+}
+
+.notif-scroll {
+  display: flex;
+  flex-direction: column;
+}
+
+.notif-group {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin: 10px 2px 6px;
+  flex: none;
+}
+
+.notif-group:first-child {
+  margin-top: 2px;
+}
+
+.notif-item {
+  flex: none;
+}
+
+.notif-item-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 9px 10px;
+  margin-bottom: 7px;
+  background: #fffdf9;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--c);
+  border-radius: 9px;
+}
+
+.notif-icon {
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: var(--c);
+  color: #fff;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notif-icon svg {
+  width: 11px;
+  height: 11px;
+}
+
+.notif-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.notif-msg {
+  font-size: 11.5px;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.notif-meta {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.notif-x {
+  flex: none;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 3px;
+  line-height: 1;
+}
+
+.notif-x:hover {
+  color: var(--sev-error);
+}
+
+.notif-item.error {
+  --c: var(--sev-error);
+}
+.notif-item.warn {
+  --c: var(--sev-warn);
+}
+.notif-item.info {
+  --c: var(--sev-info);
+}
+.notif-item.ok {
+  --c: var(--sev-ok);
+}
+
+.notif-empty {
+  text-align: center;
+  padding: 26px 10px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.notif-foot {
+  flex: none;
+  padding-top: 2px;
+}
+
+/* ---- Toasts: nacen abajo, con la misma forma que las tarjetas de Avisos
+   (.notif-item-inner), no a todo el ancho de la ventana. Un poco de margen
+   lateral y separación vertical entre ellos a cambio de anchura. ---- */
+
+.toast-dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px 12px;
+  pointer-events: none;
+}
+
+.toast-item {
+  width: 100%;
+  max-width: 440px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.28s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.toast-inner {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 9px 34px 12px 10px;
+  background: #fffdf9;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--c);
+  border-radius: 9px;
+  box-shadow: 0 4px 14px rgba(61, 51, 44, 0.14);
+  overflow: hidden;
+  transform: translateY(14px);
+  opacity: 0;
+  transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.25, 1.4), opacity 0.22s ease;
+  pointer-events: auto;
+}
+
+.toast-item.show .toast-inner {
+  transform: none;
+  opacity: 1;
+}
+
+.toast-item.error .toast-inner {
+  --c: var(--sev-error);
+}
+.toast-item.warn .toast-inner {
+  --c: var(--sev-warn);
+}
+.toast-item.info .toast-inner {
+  --c: var(--sev-info);
+}
+.toast-item.ok .toast-inner {
+  --c: var(--sev-ok);
+}
+
+.toast-icon {
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: var(--c);
+  color: #fff;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.toast-icon svg {
+  width: 11px;
+  height: 11px;
+}
+
+.toast-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-msg {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.toast-meta {
+  font-size: 10.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.toast-close {
+  position: absolute;
+  top: 9px;
+  right: 10px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 15px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 3px;
+}
+
+.toast-close:hover {
   color: var(--text);
 }
 
-.voice-item button.secondary:hover {
-  background: #d8c9b4;
+.toast-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--c);
+  width: 100%;
+}
+
+/* ---- Pestaña Registros: histórico completo, filtros, búsqueda y detalle.
+   Vive dentro de .content como las demás pestañas (antes era un modal
+   aparte con su propio scroll interno: un .log-table de flex:1 dentro de
+   un .log-panel de altura acotada, sin "min-height: 0" en el hijo, así que
+   el contenido más viejo simplemente desbordaba fuera de la vista sin
+   posibilidad de hacer scroll hasta él). Ahora el scroll lo da la propia
+   página. ---- */
+
+.sub {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.log-toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.log-search {
+  flex: 1;
+  min-width: 120px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 6px 10px;
+  font-size: 11.5px;
+  font-family: inherit;
+  background: #fff;
+  color: var(--text);
+}
+
+.log-row {
+  border-bottom: 1px solid var(--line);
+  padding: 8px 8px;
+  cursor: pointer;
+}
+
+.log-row:last-child {
+  border-bottom: none;
+}
+
+.log-row:hover {
+  background: #fffdf8;
+}
+
+.log-row-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.log-row .time {
+  color: var(--muted);
+  flex: none;
+  width: 60px;
+  font-variant-numeric: tabular-nums;
+}
+
+.log-row .msg {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Copiar el mensaje sin tener que expandir la fila. */
+.log-row-copy {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.log-row-copy:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.log-row-copy svg {
+  width: 13px;
+  height: 13px;
+}
+
+.log-detail {
+  display: none;
+  margin: 8px 4px 2px 68px;
+  padding: 8px 10px;
+  background: var(--bg);
+  border-radius: 8px;
+  font-size: 10.5px;
+  color: var(--muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.log-row.expanded .log-detail {
+  display: block;
+}
+
+.log-empty {
+  text-align: center;
+  padding: 30px 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
 }
