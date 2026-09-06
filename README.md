@@ -22,6 +22,8 @@ Todo ocurre en tu máquina: la síntesis es local, no hay llamadas a APIs extern
 
 Para que Claude Code lo use hace falta, además de tener esto corriendo, el plugin que vive en [claude-lite-speaker-plugin](https://github.com/abdedarghal111/claude-lite-speaker-plugin).
 
+⚠️ **Solo probado en Windows.** El código es multiplataforma y el build de macOS y Linux está escrito, pero sin verificar.
+
 ## Funcionalidades
 
 - **Texto en voz alta:** lee lo que le manda el modelo, y encola lo que llegue mientras habla.
