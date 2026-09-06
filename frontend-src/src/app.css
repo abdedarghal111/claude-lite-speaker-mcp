@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+/* Paleta de la app. Al declararla en @theme, Tailwind genera las utilidades
+   correspondientes: bg-panel, text-muted, border-line, etc. */
+@theme {
+  --color-bg: #f6f0e8;
+  --color-panel: #fffbf5;
+  --color-card: #fffdf9;
+  --color-line: #e4d8c9;
+  --color-line-hi: #d8c9b4;
+  --color-red: #b9614f;
+  --color-red-hi: #a8553f;
+  --color-onred: #fff7f1;
+  --color-text: #3d332c;
+  --color-muted: #8d8075;
+  /* Severidad de avisos y registros: --color-red queda reservado para la
+     marca y las acciones primarias, así que el error tiene tono propio. */
+  --color-sev-error: #ab3b2c;
+  --color-sev-warn: #c8791f;
+  --color-sev-ok: #6f8f5c;
+  --color-sev-info: #5f7a8c;
+
+  --font-sans: system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-bg text-text font-sans;
+    color-scheme: light;
+    /* La ventana no hace scroll: el que se mueve es el contenedor de las
+       pestañas (ver App.svelte), que además esconde su barra. Sin esto, un
+       panel alto empujaba la página entera y sacaba la barra del navegador. */
+    overflow: hidden;
+  }
+}
+
+@utility scroll-hidden {
+  /* Scroll sin barra visible: el gesto sigue funcionando, solo se oculta el
+     slider lateral. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility range-red {
+  accent-color: var(--color-red);
+}
+
+@keyframes badge-bump {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Sin Content-Length no se sabe el porcentaje: la barra se pasea en vez de
+   quedarse quieta, para que se note que la descarga sigue viva. */
+@keyframes indeterminate-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(330%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
