@@ -60,6 +60,17 @@ export function createPayload({ appRoot, payloadDir, contents, onnxBin, nativeSu
     // Fuera los binarios de las demás plataformas.
     pruneForeignBinaries(modulesDir, onnxBin, nativeSuffix)
 
+    // El lock y los apuntes de pnpm solo hacían falta para el install de arriba:
+    // en la carpeta que se reparte no los lee nadie.
+    for (const leftover of [
+        path.join(payloadDir, "pnpm-lock.yaml"),
+        path.join(modulesDir, ".modules.yaml"),
+        path.join(modulesDir, ".package-map.json"),
+        path.join(modulesDir, ".pnpm-workspace-state-v1.json"),
+    ]) {
+        fs.rmSync(leftover, { recursive: true, force: true })
+    }
+
     // Sin los binarios de este target el ejecutable se genera igual, pero no arranca.
     const missing = [
         path.join(modulesDir, "@webviewjs", `webview-${nativeSuffix}`),
