@@ -2,6 +2,7 @@
 <script>
     import Header from "./components/Header.svelte"
     import TabBar from "./components/TabBar.svelte"
+    import NoVoiceAlert from "./components/NoVoiceAlert.svelte"
     import VoiceTop from "./components/VoiceTop.svelte"
     import GeneralPanel from "./components/GeneralPanel.svelte"
     import VoicesPanel from "./components/VoicesPanel.svelte"
@@ -44,6 +45,7 @@
 
     <Header />
     <TabBar active={tab} onselect={selectTab} />
+    <NoVoiceAlert onopenvoices={() => selectTab("voces")} />
 
     <div class="scroll-hidden flex flex-1 flex-col gap-3.5 overflow-y-auto px-5 pb-5">
         {#if tab === "general" || tab === "voces"}
