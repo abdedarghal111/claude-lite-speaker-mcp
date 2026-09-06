@@ -33,6 +33,7 @@ export class AppSettings {
 
     // Valida y corrige los datos para un input correcto al resto de la app
     static #validate() {
+        // Sin voz válida se queda en null: es App quien la resuelve con lo que haya en disco.
         if (typeof AppSettings.values.voice !== "string" || !AppSettings.values.voice) {
             AppSettings.values.voice = DEFAULT_VOICE
         }

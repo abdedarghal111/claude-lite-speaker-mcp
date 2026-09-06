@@ -16,9 +16,25 @@ export class App {
 
     constructor() {
         AppSettings.init()
+        App.#resolveVoice()
         this.chat = new Chat()
         this.tray = new Tray(this)
         this.mcp = new MCP(this)
+    }
+
+    // La voz guardada solo vale si sus ficheros siguen en disco. Si no, se
+    // coge la primera descargada, y si no hay ninguna se queda en null: la app
+    // funciona sin voz y la ventana de ajustes lo indica.
+    static #resolveVoice() {
+        const saved = AppSettings.read("voice")
+        if (saved && VoicesManager.voiceFilesReady(saved)) {
+            return
+        }
+        const [first] = VoicesManager.listDownloadedVoices()
+        const resolved = first ? first.id : null
+        if (resolved !== saved) {
+            AppSettings.update("voice", resolved)
+        }
     }
 
     // Arranca el servidor MCP.
