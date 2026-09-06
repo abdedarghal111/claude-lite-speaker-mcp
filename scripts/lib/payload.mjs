@@ -1,6 +1,7 @@
-// Copia del proyecto desde la que se compila, con las dependencias mínimas.
-// deno compile empaqueta el node_modules que encuentra, y el del proyecto trae las
-// dependencias de desarrollo y los binarios de las seis plataformas.
+// Lo que acompaña al ejecutable en la carpeta de trabajo: el código, los recursos y
+// las dependencias. El SEA de Node solo lleva dentro el script de arranque, así que
+// todo esto -y en especial los binarios nativos, que se cargan con dlopen desde el
+// disco- tiene que quedar junto al ejecutable para que la app arranque.
 import { execSync } from "node:child_process"
 import fs from "node:fs"
 import path from "node:path"
@@ -36,24 +37,24 @@ function pruneForeignBinaries(dir, onnxBin, nativeSuffix) {
     }
 }
 
-// Monta la copia y devuelve su ruta, que es desde donde hay que compilar.
-export function createStaging({ appRoot, contents, onnxBin, nativeSuffix }) {
-    const stagingDir = path.join(appRoot, "out", "staging")
-    const modulesDir = path.join(stagingDir, "node_modules")
+// Deja el directorio listo para recibir el ejecutable al lado.
+export function createPayload({ appRoot, payloadDir, contents, onnxBin, nativeSuffix }) {
+    const modulesDir = path.join(payloadDir, "node_modules")
 
-    fs.rmSync(stagingDir, { recursive: true, force: true })
-    fs.mkdirSync(stagingDir, { recursive: true })
+    fs.rmSync(payloadDir, { recursive: true, force: true })
+    fs.mkdirSync(payloadDir, { recursive: true })
 
-    // Copia lo que va dentro del ejecutable, con el lock para instalar las mismas versiones.
+    // El código y los recursos, con el package.json -que marca el proyecto como ESM,
+    // y sin él no se cargaría ni main.js- y el lock, para instalar las mismas versiones.
     for (const entry of [...contents, "package.json", "pnpm-lock.yaml"]) {
-        fs.cpSync(path.join(appRoot, entry), path.join(stagingDir, entry), { recursive: true })
+        fs.cpSync(path.join(appRoot, entry), path.join(payloadDir, entry), { recursive: true })
     }
 
     // El node_modules del proyecto son enlaces al store de pnpm, así que aquí se
     // instala uno plano, solo de producción y sin postinstall.
     execSync("pnpm install --prod --ignore-workspace --node-linker=hoisted --ignore-scripts", {
         stdio: "inherit",
-        cwd: stagingDir,
+        cwd: payloadDir,
     })
 
     // Fuera los binarios de las demás plataformas.
@@ -67,11 +68,4 @@ export function createStaging({ appRoot, contents, onnxBin, nativeSuffix }) {
     if (missing.length > 0) {
         throw new Error(`Faltan binarios nativos del target:\n  ${missing.join("\n  ")}`)
     }
-
-    return stagingDir
-}
-
-// Borra la copia una vez compilado el ejecutable.
-export function removeStaging(appRoot) {
-    fs.rmSync(path.join(appRoot, "out", "staging"), { recursive: true, force: true })
 }

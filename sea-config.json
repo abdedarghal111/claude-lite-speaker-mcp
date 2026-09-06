@@ -1,0 +1,11 @@
+{
+  "main": "src/exe-entry.cjs",
+  "mainFormat": "commonjs",
+  "output": ".build/sea-build",
+  "disableExperimentalSEAWarning": true,
+  "useSnapshot": false,
+  "useCodeCache": false,
+  "execArgv": [],
+  "execArgvExtension": "env",
+  "assets": {}
+}
