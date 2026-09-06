@@ -6,7 +6,8 @@ export const status = $state({
     // null hasta el primer status: la cabecera pinta "Conectando…".
     connected: null,
     speaking: false,
-    voice: "—",
+    // null: no hay ninguna voz activa (ninguna instalada, o la guardada ya no está).
+    voice: null,
     speed: 1,
     volume: 100,
     notification: false,
