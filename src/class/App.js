@@ -45,6 +45,7 @@ export class App {
         setNotification: "cmdSetNotification",
         setVolume: "cmdSetVolume",
         status: "cmdStatus",
+        debugLog: "cmdDebugLog",
     }
 
     // Resuelve un comando pedido por la ventana de ajustes.
@@ -129,6 +130,11 @@ export class App {
             ...(lastError ? { last_error: lastError } : {}),
         }
         return { ok: true, result: snapshot }
+    }
+
+    // Tabla de errores en memoria, para el panel de Avisos.
+    cmdDebugLog() {
+        return { ok: true, result: Logger.errors }
     }
 
     // Valida y activa una voz (coordina VoicesManager y AppSettings).
