@@ -58,9 +58,9 @@ export class Window {
 
         this.win = this.nativeApp.createBrowserWindow({
             title: "Claude Lite Speaker",
-            width: 480,
+            width: 540,
             height: 720,
-            minWidth: 420,
+            minWidth: 460,
             minHeight: 540,
             windowsTaskbarIcon: { data: this.appIconBuffer },
         })
