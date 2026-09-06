@@ -28,3 +28,9 @@ export const PLAYBACK_DRAIN_MS = 1000 * 0.5 // 0.5 segundos
 export const AUDIO_SERVER_HTTP_PORT = 51703
 
 export const MODEL_IDLE_UNLOAD_MS = 15 * 60 * 1000 // 15 minutos
+
+// Cada cuánto mira el avisador si hay errores nuevos en el registro.
+export const NOTIFIER_POLL_MS = 1000
+
+// Espera mínima entre dos avisos, para no llenar el centro de notificaciones.
+export const NOTIFIER_COOLDOWN_MS = 10 * 1000
