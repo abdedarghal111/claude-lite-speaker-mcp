@@ -15,6 +15,7 @@ process.on("uncaughtException", fatal)
 
 // Después de los manejadores, para que un import fallido quede registrado.
 const { App } = await import("./class/App.js")
+const { Notifier } = await import("./class/Notifier.js")
 const { RESOURCES_DIR, FRONTEND_DIR, APP_ROOT } = await import("./paths.js")
 
 const app = App.getInstance()
@@ -24,6 +25,9 @@ await app.start()
 
 // El autoarranque necesita APP_ROOT para apuntar al binario.
 await app.tray.start({ resourcesDir: RESOURCES_DIR, frontendDir: FRONTEND_DIR, appRoot: APP_ROOT })
+
+// A partir de aquí los errores registrados avisan al usuario.
+Notifier.start(RESOURCES_DIR)
 
 // No se abre sola si el autoarranque la lanzó en segundo plano
 const launchedFromAutostart = process.argv.includes("--opened-from-autostart")

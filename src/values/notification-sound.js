@@ -38,3 +38,6 @@ export const START_SOUND = { samples: concat(tone(988, 90), SILENCE_GAP, tone(13
 
 // Notas descendentes: E6 -> B5.
 export const END_SOUND = { samples: concat(tone(1319, 90), SILENCE_GAP, tone(988, 130)), sampleRate: SAMPLE_RATE }
+
+// Notas graves descendentes, más fuertes de lo normal: A4 -> Eb4.
+export const ERROR_SOUND = { samples: concat(tone(440, 110, 0.24), SILENCE_GAP, tone(311, 200, 0.24)), sampleRate: SAMPLE_RATE }
