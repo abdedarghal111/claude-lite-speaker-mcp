@@ -14,7 +14,8 @@
   },
   "packageManager": "pnpm@11.24.0",
   "scripts": {
-    "dev": "node src/main.js --open-dev-tools",
+    "dev": "pnpm build:frontend && node src/main.js --open-dev-tools",
+    "build:frontend": "vite build --config frontend-src/vite.config.js",
     "build": "node scripts/build.mjs",
     "clean": "node scripts/build.mjs --clean"
   },
@@ -28,9 +29,14 @@
     "zod": "^4.5.2"
   },
   "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "@tailwindcss/vite": "^4.3.3",
     "archiver": "^8.0.0",
     "plist": "^5.0.0",
     "png2icons": "^2.0.1",
-    "rcedit": "^5.0.2"
+    "rcedit": "^5.0.2",
+    "svelte": "^5.57.0",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.2.2"
   }
 }

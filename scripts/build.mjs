@@ -58,6 +58,12 @@ if (seaConfig.useCodeCache) {
 // tienen que existir de antemano.
 fs.mkdirSync(path.dirname(seaBuild), { recursive: true })
 fs.mkdirSync(path.join(APP_ROOT, "out"), { recursive: true })
+
+// La carpeta "frontend" que se empaqueta es generada: la fuente está en
+// "frontend-src" (Svelte + Tailwind) y no viaja dentro del ejecutable.
+console.log("[build] compilando el frontend…")
+execFileSync("pnpm", ["run", "build:frontend"], { stdio: "inherit", cwd: APP_ROOT, shell: process.platform === "win32" })
+
 execFileSync(process.execPath, ["--build-sea=sea-config.json"], { stdio: "inherit", cwd: APP_ROOT })
 
 // El ejecutable recién salido no es más que Node con el arranque dentro: no tiene al

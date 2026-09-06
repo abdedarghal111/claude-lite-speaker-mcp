@@ -11,3 +11,6 @@ dist/
 .tmp/
 out/
 .build/
+
+# Salida del build del frontend (la fuente vive en frontend-src/).
+frontend/
