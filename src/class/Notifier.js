@@ -1,6 +1,7 @@
 // Avisa al usuario de los errores que registra el Logger, con un sonido y una
 // notificación del sistema. Solo mira el nivel: error avisa, warn no.
 import path from "node:path"
+import { Notification } from "electron"
 import { AudioOutput } from "./AudioOutput.js"
 import { Logger } from "./Logger.js"
 import { ERROR_SOUND } from "../values/notification-sound.js"
@@ -51,17 +52,16 @@ export class Notifier {
     // registra como warn porque un error volvería a avisar y no pararía nunca.
     static async #showToast() {
         try {
-            const { Notification } = await import("@webviewjs/webview")
-            const notification = new Notification(TITLE, {
+            const notification = new Notification({
+                title: TITLE,
                 body: BODY,
-                // icon lo usa Linux; image, Windows y macOS.
                 icon: Notifier.#iconPath,
-                image: Notifier.#iconPath,
             })
             // En Windows llega aquí si los toasts están desactivados en el sistema.
-            notification.on("error", ({ error }) => {
+            notification.on("failed", (_event, error) => {
                 Logger.warn("notifier", "No se pudo mostrar el aviso del sistema.", error)
             })
+            notification.show()
         } catch (cause) {
             Logger.warn("notifier", "No se pudo mostrar el aviso del sistema.", cause)
         }
