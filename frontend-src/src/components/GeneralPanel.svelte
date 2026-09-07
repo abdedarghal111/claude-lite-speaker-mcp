@@ -2,7 +2,7 @@
 <script>
     import Icon from "./Icon.svelte"
     import Switch from "./Switch.svelte"
-    import { callCommand, isAutostartEnabled, setAutostart, openDevtools } from "../lib/native.js"
+    import { callCommand, isAutostartEnabled, setAutostart, openDevtools, openDataFolder } from "../lib/native.js"
     import { notifyError } from "../lib/notifications.svelte.js"
     import { status, isDangerVolume } from "../lib/status.svelte.js"
     import { CARD } from "../lib/styles.js"
@@ -94,6 +94,14 @@
         onchange={() => setAutostart(autostart).catch((err) => notifyError("setAutostart", err))} />
 
     <hr class="m-0 border-none border-t border-line" />
+
+    <button
+        type="button"
+        class="flex cursor-pointer items-center gap-1.75 border-none bg-transparent p-0 text-left text-xs font-semibold text-text hover:text-red"
+        onclick={() => openDataFolder().catch((err) => notifyError("openDataFolder", err))}>
+        <Icon name="folder" class="h-3.5 w-3.5 flex-none text-muted" />
+        Abrir la carpeta de datos
+    </button>
 
     <button
         type="button"

@@ -1,9 +1,20 @@
 // Icono y menú de la bandeja del sistema; abre bajo demanda la ventana de ajustes (ver class/Window.js).
 import path from "node:path"
-import { app as electronApp, Tray as ElectronTray, Menu, nativeImage } from "electron"
+import fs from "node:fs/promises"
+import { app as electronApp, Tray as ElectronTray, Menu, nativeImage, shell } from "electron"
+import { Logger } from "./Logger.js"
 import { Window } from "./Window.js"
 import { AudioOutput } from "./AudioOutput.js"
 import { isAutostartEnabled, setAutostart, initAutostart } from "../lib/autostart.js"
+
+// openPath no lanza: devuelve el motivo del fallo en una cadena, y vacía si ha ido bien.
+async function openFolder(dir) {
+    await fs.mkdir(dir, { recursive: true })
+    const failure = await shell.openPath(dir)
+    if (failure) {
+        Logger.error("tray:openFolder", `No se ha podido abrir la carpeta ${dir}: ${failure}`)
+    }
+}
 
 export class Tray {
     constructor(app) {
@@ -16,7 +27,8 @@ export class Tray {
     }
 
     // resourcesDir: carpeta con los PNG de bandeja. frontendDir: HTML/CSS/JS de la ventana.
-    async start({ resourcesDir, frontendDir }) {
+    // dataDir: la carpeta de datos del usuario, que la ventana ofrece abrir.
+    async start({ resourcesDir, frontendDir, dataDir }) {
         // Corrige el destino del autoarranque si la app se movió o se reempaquetó.
         await initAutostart()
 
@@ -42,6 +54,7 @@ export class Tray {
                 isAutostartEnabled,
                 setAutostart: (enabled) => setAutostart(enabled),
                 openDevtools: () => this.window.openDevtools(),
+                openDataFolder: () => openFolder(dataDir),
             },
         })
 
