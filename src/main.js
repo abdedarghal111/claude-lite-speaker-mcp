@@ -23,7 +23,7 @@ protocol.registerSchemesAsPrivileged([
 // Después de los manejadores, para que un import fallido quede registrado.
 const { App } = await import("./class/App.js")
 const { Notifier } = await import("./class/Notifier.js")
-const { RESOURCES_DIR, FRONTEND_DIR, APP_ROOT, SESSION_PROFILE_DIR } = await import("./paths.js")
+const { RESOURCES_DIR, FRONTEND_DIR, SESSION_PROFILE_DIR } = await import("./paths.js")
 
 // Perfil de sesión de la ventana, aparte del resto de datos (ver class/Window.js).
 electronApp.setPath("userData", SESSION_PROFILE_DIR)
@@ -38,8 +38,7 @@ electronApp.whenReady().then(async () => {
   // Arranca el MCP antes que la bandeja para no duplicar instancias si el puerto ya está ocupado.
   await app.start()
 
-  // El autoarranque necesita APP_ROOT para apuntar al binario.
-  await app.tray.start({ resourcesDir: RESOURCES_DIR, frontendDir: FRONTEND_DIR, appRoot: APP_ROOT })
+  await app.tray.start({ resourcesDir: RESOURCES_DIR, frontendDir: FRONTEND_DIR })
 
   // A partir de aquí los errores registrados avisan al usuario.
   Notifier.start(RESOURCES_DIR)

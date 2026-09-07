@@ -34,13 +34,13 @@ nsis:
   allowToChangeInstallationDirectory: true
 
 mac:
-  target: dmg
+  target: [dmg, pkg]
   icon: res/icons/appIcon.png
   category: public.app-category.utilities
   identity: null
 
 linux:
-  target: [AppImage, deb]
+  target: [AppImage, deb, pacman]
   icon: res/icons/appIcon.png
   executableName: claude-lite-speaker
   category: Utility

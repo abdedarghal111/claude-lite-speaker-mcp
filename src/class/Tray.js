@@ -16,10 +16,9 @@ export class Tray {
     }
 
     // resourcesDir: carpeta con los PNG de bandeja. frontendDir: HTML/CSS/JS de la ventana.
-    // appRoot: raíz del binario, la necesita Window para exponer setAutostart.
-    async start({ resourcesDir, frontendDir, appRoot }) {
+    async start({ resourcesDir, frontendDir }) {
         // Corrige el destino del autoarranque si la app se movió o se reempaquetó.
-        await initAutostart(appRoot)
+        await initAutostart()
 
         const ICONS = {
             idle: path.join(resourcesDir, "icons", "trayIcon.png"),
@@ -41,7 +40,7 @@ export class Tray {
             appIconPath,
             api: {
                 isAutostartEnabled,
-                setAutostart: (enabled) => setAutostart(appRoot, enabled),
+                setAutostart: (enabled) => setAutostart(enabled),
                 openDevtools: () => this.window.openDevtools(),
             },
         })
