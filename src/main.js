@@ -33,6 +33,9 @@ electronApp.on("window-all-closed", () => {})
 
 // En .then() y no con await: en ESM, un top-level await impide que llegue "ready".
 electronApp.whenReady().then(async () => {
+  // Marca dónde empieza cada ejecución en el registro, antes de nada que pueda fallar.
+  Logger.info("app:start", `Arranque de Claude Lite Speaker ${electronApp.getVersion()}.`)
+
   const app = App.getInstance()
 
   // Arranca el MCP antes que la bandeja para no duplicar instancias si el puerto ya está ocupado.
