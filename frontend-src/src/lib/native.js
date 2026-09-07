@@ -23,6 +23,10 @@ export function openDataFolder() {
     return window.native.openDataFolder()
 }
 
+export function testNotification() {
+    return window.native.testNotification()
+}
+
 export function quitApp() {
     return window.native.quitApp()
 }

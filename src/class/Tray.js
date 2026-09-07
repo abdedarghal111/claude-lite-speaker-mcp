@@ -5,6 +5,7 @@ import { app as electronApp, Tray as ElectronTray, Menu, nativeImage, shell } fr
 import { Logger } from "./Logger.js"
 import { Window } from "./Window.js"
 import { AudioOutput } from "./AudioOutput.js"
+import { Notifier } from "./Notifier.js"
 import { isAutostartEnabled, setAutostart } from "../lib/autostart.js"
 
 // openPath no lanza: devuelve el motivo del fallo en una cadena, y vacía si ha ido bien.
@@ -51,6 +52,7 @@ export class Tray {
                 setAutostart: (enabled) => setAutostart(enabled),
                 openDevtools: () => this.window.openDevtools(),
                 openDataFolder: () => openFolder(dataDir),
+                testNotification: () => Notifier.test(),
                 quitApp: () => this.quit(),
             },
         })
