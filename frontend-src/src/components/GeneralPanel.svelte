@@ -2,15 +2,8 @@
 <script>
     import Icon from "./Icon.svelte"
     import Switch from "./Switch.svelte"
-    import {
-        callCommand,
-        isAutostartEnabled,
-        setAutostart,
-        openDevtools,
-        openDataFolder,
-        testNotification,
-        quitApp,
-    } from "../lib/native.js"
+    import AutostartButton from "./AutostartButton.svelte"
+    import { callCommand, openDevtools, openDataFolder, testNotification, quitApp } from "../lib/native.js"
     import { notifyError } from "../lib/notifications.svelte.js"
     import { status, isDangerVolume } from "../lib/status.svelte.js"
     import { CARD } from "../lib/styles.js"
@@ -19,17 +12,12 @@
     let speed = $state(1)
     let volume = $state(100)
     let dragging = $state(false)
-    let autostart = $state(false)
 
     $effect(() => {
         if (!dragging) {
             speed = status.speed
             volume = status.volume
         }
-    })
-
-    $effect(() => {
-        isAutostartEnabled().then((v) => (autostart = v))
     })
 
     function commitSpeed() {
@@ -95,11 +83,7 @@
                 notifyError("setNotification", err)
             )} />
 
-    <Switch
-        icon="power"
-        label="Autoarranque"
-        bind:checked={autostart}
-        onchange={() => setAutostart(autostart).catch((err) => notifyError("setAutostart", err))} />
+    <AutostartButton />
 
     <hr class="m-0 border-none border-t border-line" />
 
