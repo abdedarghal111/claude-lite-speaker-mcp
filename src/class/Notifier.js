@@ -9,6 +9,8 @@ import { NOTIFIER_POLL_MS, NOTIFIER_COOLDOWN_MS } from "../values/constants.js"
 
 const TITLE = "Algo ha fallado"
 const BODY = "Abre Claude Lite Speaker y mira la pestaña Avisos."
+const TEST_TITLE = "Prueba de aviso"
+const TEST_BODY = "Si has oído el sonido y ves esto, los avisos funcionan."
 
 export class Notifier {
     static #lastSeq = 0
@@ -23,6 +25,13 @@ export class Notifier {
         Notifier.#lastSeq = Logger.lastSeq
         Notifier.#timer = setInterval(() => Notifier.#check(), NOTIFIER_POLL_MS)
         Notifier.#timer.unref()
+    }
+
+    // Lanza el aviso completo a petición: sonido y notificación del sistema. No respeta
+    // la espera entre avisos.
+    static test() {
+        Notifier.#play()
+        Notifier.#showToast(TEST_TITLE, TEST_BODY)
     }
 
     static stop() {
@@ -40,21 +49,25 @@ export class Notifier {
         }
         Notifier.#lastNotifiedAt = Date.now()
 
-        // El volumen del aviso va en el propio buffer, no en el ajuste de la voz.
+        Notifier.#play()
+        Notifier.#showToast(TITLE, BODY)
+    }
+
+    // El volumen del aviso va en el propio buffer, no en el ajuste de la voz.
+    static #play() {
         AudioOutput.playPcm(Notifier, ERROR_SOUND.samples, ERROR_SOUND.sampleRate).catch((cause) =>
             Logger.warn("notifier", "No sonó el aviso de error.", cause)
         )
-        Notifier.#showToast()
     }
 
     // El catch es obligado: esto sale de un setInterval, así que un fallo suelto
     // acabaría en unhandledRejection y cerraría la app por no poder avisar. Se
     // registra como warn porque un error volvería a avisar y no pararía nunca.
-    static async #showToast() {
+    static async #showToast(title, body) {
         try {
             const notification = new Notification({
-                title: TITLE,
-                body: BODY,
+                title,
+                body,
                 icon: Notifier.#iconPath,
             })
             // En Windows llega aquí si los toasts están desactivados en el sistema.

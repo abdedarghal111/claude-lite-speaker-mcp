@@ -8,6 +8,7 @@
         setAutostart,
         openDevtools,
         openDataFolder,
+        testNotification,
         quitApp,
     } from "../lib/native.js"
     import { notifyError } from "../lib/notifications.svelte.js"
@@ -101,6 +102,15 @@
         onchange={() => setAutostart(autostart).catch((err) => notifyError("setAutostart", err))} />
 
     <hr class="m-0 border-none border-t border-line" />
+
+    <!-- Lanza el mismo aviso que un error real: sonido y notificación del sistema. -->
+    <button
+        type="button"
+        class="flex cursor-pointer items-center gap-1.75 border-none bg-transparent p-0 text-left text-xs font-semibold text-text hover:text-red"
+        onclick={() => testNotification().catch((err) => notifyError("testNotification", err))}>
+        <Icon name="bell" class="h-3.5 w-3.5 flex-none text-muted" />
+        Probar el aviso de errores
+    </button>
 
     <button
         type="button"
