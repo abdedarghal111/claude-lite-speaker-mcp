@@ -9,6 +9,7 @@
         bell: '<path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0"/>',
         power: '<path d="M12 2v8"/><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/>',
         code: '<path d="m8 9-3 3 3 3M13 8l-2 8"/>',
+        folder: '<path d="M3 7a2 2 0 0 1 2-2h3.2l2 2.5H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
         refresh:
             '<path d="M3 12a9 9 0 0 1 15.5-6.3L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16"/><path d="M8 16H3v5"/>',
         search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-3.6-3.6"/>',

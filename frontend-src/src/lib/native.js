@@ -18,3 +18,7 @@ export function setAutostart(enabled) {
 export function openDevtools() {
     return window.native.openDevtools()
 }
+
+export function openDataFolder() {
+    return window.native.openDataFolder()
+}
