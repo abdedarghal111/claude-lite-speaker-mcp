@@ -106,9 +106,8 @@ export class Tray {
         }
     }
 
-    // "Salir" cierra la ventana de ajustes, detiene el servidor HTTP y termina el proceso.
+    // "Salir" detiene el servidor HTTP y termina el proceso.
     quit() {
-        this.window.close()
         this.app.mcp.stop()
         electronApp.quit()
     }
