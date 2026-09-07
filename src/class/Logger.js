@@ -7,13 +7,17 @@ export class Logger {
     static #entries = []
     static #seq = 0
 
-    // error: se le avisa al usuario (ver class/Notifier.js). warn: solo registro.
+    // error: se le avisa al usuario (ver class/Notifier.js). warn e info: solo registro.
     static error(source, message, cause) {
         return Logger.#add("error", source, message, cause)
     }
 
     static warn(source, message, cause) {
         return Logger.#add("warn", source, message, cause)
+    }
+
+    static info(source, message, cause) {
+        return Logger.#add("info", source, message, cause)
     }
 
     // source: "modulo:accion". message: la frase que lee el usuario, con los
@@ -34,8 +38,8 @@ export class Logger {
         // La traza va solo al fichero. Si no hay excepción, apunta a la línea
         // que llamó al Logger.
         const origin = new Error(message)
-        // level es "error" o "warn", el mismo nombre que el método público:
-        // así la traza empieza en quien lo llamó, no dentro del Logger.
+        // level es el mismo nombre que el método público: así la traza empieza en
+        // quien lo llamó, no dentro del Logger.
         Error.captureStackTrace(origin, Logger[level])
         Logger.#write(`${entry.text}\n${cause?.stack || origin.stack}\n\n`)
 
