@@ -1,7 +1,7 @@
 // Ventana de ajustes de configuración
 import path from "node:path"
 import { readFile } from "node:fs/promises"
-import { BrowserWindow, session } from "electron"
+import { app as electronApp, BrowserWindow, session } from "electron"
 import { PRELOAD_FILE } from "../paths.js"
 
 const MIME = {
@@ -25,12 +25,9 @@ function resolveStaticFile(baseDir, pathname) {
 }
 
 export class Window {
-    // resourcesDir/frontendDir: únicas carpetas servidas por el protocolo app://
-    // (ver open()); nada fuera de ellas es accesible desde la ventana.
-    // El perfil de sesión (cookies, storage…) vive bajo SESSION_PROFILE_DIR, fijado
-    // como userData en main.js.
-    // api: funciones propias de la ventana (autoarranque, devtools); los
-    // comandos de negocio llegan por this.app.frontendApi (ver App.js).
+    // resourcesDir/frontendDir: lo único que sirve el protocolo app:// (ver open()).
+    // api: funciones propias de la ventana; los comandos de negocio van aparte,
+    // por this.app.handleCommand (ver App.js).
     constructor({ app, resourcesDir, frontendDir, appIconPath, api }) {
         this.app = app
         this.resourcesDir = resourcesDir
@@ -39,6 +36,13 @@ export class Window {
         this.api = api
         this.win = null
         this.session = null
+
+        // Al salir hay que dejar que la ventana se cierre: si "close" siguiera
+        // cancelando, cancelaría el cierre de app.quit() y la app no terminaría.
+        this.quitting = false
+        electronApp.once("before-quit", () => {
+            this.quitting = true
+        })
     }
 
     isOpen() {
@@ -72,8 +76,11 @@ export class Window {
             },
         })
 
-        // Oculta la ventana en vez de destruirla al cerrarse.
+        // Oculta la ventana en vez de destruirla al cerrarse, salvo si es la salida.
         this.win.on("close", (event) => {
+            if (this.quitting) {
+                return
+            }
             event.preventDefault()
             this.win.hide()
         })
@@ -114,7 +121,8 @@ export class Window {
         this.win.loadURL("app://localhost/index.html")
     }
 
-    // Oculta la ventana en vez de destruirla; solo "Salir" en el menú de bandeja termina el proceso.
+    // Oculta la ventana en vez de destruirla: el proceso solo termina con "Salir",
+    // en el menú de la bandeja o en los ajustes.
     close() {
         this.win?.hide()
     }
