@@ -2,7 +2,14 @@
 <script>
     import Icon from "./Icon.svelte"
     import Switch from "./Switch.svelte"
-    import { callCommand, isAutostartEnabled, setAutostart, openDevtools, openDataFolder } from "../lib/native.js"
+    import {
+        callCommand,
+        isAutostartEnabled,
+        setAutostart,
+        openDevtools,
+        openDataFolder,
+        quitApp,
+    } from "../lib/native.js"
     import { notifyError } from "../lib/notifications.svelte.js"
     import { status, isDangerVolume } from "../lib/status.svelte.js"
     import { CARD } from "../lib/styles.js"
@@ -109,5 +116,15 @@
         onclick={() => openDevtools().catch((err) => notifyError("openDevtools", err))}>
         <Icon name="code" class="h-3.5 w-3.5 flex-none text-muted" />
         Abrir herramientas de desarrollador
+    </button>
+
+    <hr class="m-0 border-none border-t border-line" />
+
+    <button
+        type="button"
+        class="flex cursor-pointer items-center gap-1.75 border-none bg-transparent p-0 text-left text-xs font-semibold text-red hover:brightness-125"
+        onclick={() => quitApp().catch((err) => notifyError("quitApp", err))}>
+        <Icon name="exit" class="h-3.5 w-3.5 flex-none text-red" />
+        Cerrar la aplicación por completo
     </button>
 </section>

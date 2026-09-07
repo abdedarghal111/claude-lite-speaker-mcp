@@ -22,3 +22,7 @@ export function openDevtools() {
 export function openDataFolder() {
     return window.native.openDataFolder()
 }
+
+export function quitApp() {
+    return window.native.quitApp()
+}
