@@ -1,6 +1,8 @@
 // Ventana de ajustes de configuración
 import path from "node:path"
 import { readFile } from "node:fs/promises"
+import { BrowserWindow, session } from "electron"
+import { PRELOAD_FILE } from "../paths.js"
 
 const MIME = {
     ".html": "text/html; charset=utf-8",
@@ -23,24 +25,20 @@ function resolveStaticFile(baseDir, pathname) {
 }
 
 export class Window {
-    // nativeApp: instancia de @webviewjs/webview compartida con el tray.
     // resourcesDir/frontendDir: únicas carpetas servidas por el protocolo app://
     // (ver open()); nada fuera de ellas es accesible desde la ventana.
-    // profileDir: carpeta de perfil del webview, separada de DATA_DIR.
+    // El perfil de sesión (cookies, storage…) vive bajo SESSION_PROFILE_DIR, fijado
+    // como userData en main.js.
     // api: funciones propias de la ventana (autoarranque, devtools); los
     // comandos de negocio llegan por this.app.frontendApi (ver App.js).
-    constructor({ app, nativeApp, resourcesDir, frontendDir, appIconBuffer, api, profileDir }) {
+    constructor({ app, resourcesDir, frontendDir, appIconPath, api }) {
         this.app = app
-        this.nativeApp = nativeApp
         this.resourcesDir = resourcesDir
         this.frontendDir = frontendDir
-        this.appIconBuffer = appIconBuffer
+        this.appIconPath = appIconPath
         this.api = api
-        this.profileDir = profileDir
         this.win = null
-        // Referencias fuertes a webContext/webview: evitan que el GC las recolecte y disponga la ventana.
-        this.webContext = null
-        this.webview = null
+        this.session = null
     }
 
     isOpen() {
@@ -56,23 +54,37 @@ export class Window {
             return
         }
 
-        this.win = this.nativeApp.createBrowserWindow({
+        // Sesión de la ventana, con su propio perfil en disco (cookies, storage…).
+        this.session = session.fromPartition("persist:settings-window", { cache: true })
+
+        this.win = new BrowserWindow({
             title: "Claude Lite Speaker",
             width: 540,
             height: 720,
             minWidth: 460,
             minHeight: 540,
-            windowsTaskbarIcon: { data: this.appIconBuffer },
+            icon: this.appIconPath,
+            webPreferences: {
+                session: this.session,
+                preload: PRELOAD_FILE,
+                contextIsolation: true,
+                sandbox: true,
+            },
         })
-        // Fuerza el icono de la ventana en la barra de título y en Alt+Tab.
-        this.win.setWindowIcon(this.appIconBuffer)
 
         // Oculta la ventana en vez de destruirla al cerrarse.
-        this.win.on("close", () => {
+        this.win.on("close", (event) => {
+            event.preventDefault()
             this.win.hide()
         })
 
-        this.win.registerProtocol("app", async (request) => {
+        // Las devtools se acoplan dentro y tapan el panel de ajustes: se ensancha.
+        this.win.webContents.on("devtools-opened", () => {
+            const [width, height] = this.win.getSize()
+            this.win.setSize(width + 400, height)
+        })
+
+        this.session.protocol.handle("app", async (request) => {
             const url = new URL(request.url)
             const pathname = decodeURIComponent(url.pathname)
             // /icons/* viene de resourcesDir (bandeja); el resto, de frontendDir.
@@ -93,17 +105,13 @@ export class Window {
             }
         })
 
-        this.webContext = this.nativeApp.createWebContext({ dataDirectory: this.profileDir })
-        this.webview = this.win.createWebview({
-            url: "app://localhost/index.html",
-            webContext: this.webContext,
-            enableDevtools: true,
-        })
-        this.webview.expose("native", {
-            // Único punto de entrada a los comandos de negocio (ver App.js).
-            callCommand: (name, args) => this.app.handleCommand(name, args),
-            ...this.api,
-        })
+        // Comandos de negocio y funciones de la ventana, expuestos vía preload.cjs.
+        this.win.webContents.ipc.handle("native:callCommand", (_event, name, args) => this.app.handleCommand(name, args))
+        for (const [name, fn] of Object.entries(this.api)) {
+            this.win.webContents.ipc.handle(`native:${name}`, (_event, ...args) => fn(...args))
+        }
+
+        this.win.loadURL("app://localhost/index.html")
     }
 
     // Oculta la ventana en vez de destruirla; solo "Salir" en el menú de bandeja termina el proceso.
@@ -112,7 +120,7 @@ export class Window {
     }
 
     openDevtools() {
-        this.webview?.openDevtools()
+        this.win?.webContents.openDevTools()
         return true
     }
 }
