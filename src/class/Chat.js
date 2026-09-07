@@ -64,8 +64,8 @@ export class Chat {
             })
     }
 
-    // Cierra la racha de habla cuando la cola se vacía, reproduciendo el
-    // ding final si procede. Un fallo al reproducirlo se ignora: no es crítico.
+    // Cierra la racha de habla cuando la cola se vacía, reproduciendo el ding final si
+    // procede. Un fallo al reproducirlo se registra, pero no corta nada: el texto ya se leyó.
     #closeStreakIfDrained(job, allowEndNotification) {
         if (!this.#streakOpen || this.#jobs.length > 0) {
             return
@@ -76,11 +76,11 @@ export class Chat {
         }
         try {
             const { samples, sampleRate } = END_SOUND
-            AudioOutput.playPcm(this, samples, sampleRate, AudioEngine.volumePercentToGain(job.volume)).catch(() => {
-                // TODO: handlear o revisar
-            })
-        } catch {
-            // no crítico
+            AudioOutput.playPcm(this, samples, sampleRate, AudioEngine.volumePercentToGain(job.volume)).catch(
+                (cause) => Logger.warn("chat:ding", "No sonó el ding de fin de lectura.", cause)
+            )
+        } catch (cause) {
+            Logger.warn("chat:ding", "No sonó el ding de fin de lectura.", cause)
         }
     }
 
@@ -104,8 +104,9 @@ export class Chat {
                 if (!notificationOk) {
                     cutOff = true
                 }
-            } catch {
-                /* si falla el ding, seguimos igualmente con la voz */
+            } catch (cause) {
+                // Se sigue igualmente con la voz: el ding no es lo que se pidió leer.
+                Logger.warn("chat:ding", "No sonó el ding de inicio de lectura.", cause)
             }
         }
 
