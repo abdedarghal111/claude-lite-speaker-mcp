@@ -5,7 +5,7 @@ import { app as electronApp, Tray as ElectronTray, Menu, nativeImage, shell } fr
 import { Logger } from "./Logger.js"
 import { Window } from "./Window.js"
 import { AudioOutput } from "./AudioOutput.js"
-import { isAutostartEnabled, setAutostart, initAutostart } from "../lib/autostart.js"
+import { isAutostartEnabled, setAutostart } from "../lib/autostart.js"
 
 // openPath no lanza: devuelve el motivo del fallo en una cadena, y vacía si ha ido bien.
 async function openFolder(dir) {
@@ -29,9 +29,6 @@ export class Tray {
     // resourcesDir: carpeta con los PNG de bandeja. frontendDir: HTML/CSS/JS de la ventana.
     // dataDir: la carpeta de datos del usuario, que la ventana ofrece abrir.
     async start({ resourcesDir, frontendDir, dataDir }) {
-        // Corrige el destino del autoarranque si la app se movió o se reempaquetó.
-        await initAutostart()
-
         const ICONS = {
             idle: path.join(resourcesDir, "icons", "trayIcon.png"),
             speaking: [1, 2, 3].map((n) => path.join(resourcesDir, "icons", `trayIconSpeaking${n}.png`)),

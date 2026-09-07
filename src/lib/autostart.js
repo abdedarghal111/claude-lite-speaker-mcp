@@ -46,18 +46,6 @@ async function isWindowsAutostartEnabled() {
     return !(await isWindowsStartupApprovedDisabled())
 }
 
-// TargetPath del acceso directo ya existente, o null si no hay uno.
-// CreateShortcut() sobre un .lnk existente lo abre para leerlo, sin Save().
-async function windowsAutostartTarget() {
-    const linkPath = windowsStartupLinkPath()
-    if (!fs.existsSync(linkPath)) {
-        return null
-    }
-    const ps = `$s = New-Object -ComObject WScript.Shell; Write-Output $s.CreateShortcut('${linkPath}').TargetPath`
-    const result = await execFileAsync("powershell", ["-NoProfile", "-Command", ps]).catch(() => null)
-    return result ? String(result.stdout || "").trim() : null
-}
-
 async function setWindowsAutostart(target, enabled) {
     const linkPath = windowsStartupLinkPath()
     if (!enabled) {
@@ -86,18 +74,6 @@ function macLaunchAgentPath() {
 
 async function isMacAutostartEnabled() {
     return fs.existsSync(macLaunchAgentPath())
-}
-
-// ProgramArguments[0] del LaunchAgent ya existente, o null si no hay uno.
-async function macAutostartTarget() {
-    const plistPath = macLaunchAgentPath()
-    if (!fs.existsSync(plistPath)) {
-        return null
-    }
-    const result = await execFileAsync("/usr/libexec/PlistBuddy", ["-c", "Print ProgramArguments:0", plistPath]).catch(
-        () => null
-    )
-    return result ? String(result.stdout || "").trim() : null
 }
 
 async function setMacAutostart(target, enabled) {
@@ -134,16 +110,6 @@ async function isLinuxAutostartEnabled() {
     return fs.existsSync(linuxAutostartPath())
 }
 
-// Valor de Exec= de la entrada .desktop ya existente, o null si no hay una.
-function linuxAutostartTarget() {
-    const desktopPath = linuxAutostartPath()
-    if (!fs.existsSync(desktopPath)) {
-        return null
-    }
-    const match = fs.readFileSync(desktopPath, "utf8").match(/^Exec="(.*)"$/m)
-    return match ? match[1] : null
-}
-
 async function setLinuxAutostart(target, enabled) {
     const desktopPath = linuxAutostartPath()
     if (!enabled) {
@@ -176,29 +142,8 @@ export async function isAutostartEnabled() {
     return isLinuxAutostartEnabled()
 }
 
-async function currentAutostartTarget() {
-    if (process.platform === "win32") {
-        return windowsAutostartTarget()
-    }
-    if (process.platform === "darwin") {
-        return macAutostartTarget()
-    }
-    return linuxAutostartTarget()
-}
-
-// Se llama en cada arranque: si el autoarranque apunta a una ruta distinta
-// de la actual (app movida o reempaquetada), lo regenera.
-export async function initAutostart() {
-    if (!(await isAutostartEnabled())) {
-        return
-    }
-    if ((await currentAutostartTarget()) !== process.execPath) {
-        await setAutostart(true)
-    }
-}
-
-// El objetivo es el binario que está corriendo, que es el de la app instalada; en
-// desarrollo sería el de Electron, y ahí el autoarranque no tiene sentido.
+// Escribe el autoarranque apuntando al binario que está corriendo, que es el de la app
+// instalada; en desarrollo sería el de Electron, y ahí el autoarranque no tiene sentido.
 export async function setAutostart(enabled) {
     const target = process.execPath
     if (process.platform === "win32") {
