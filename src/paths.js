@@ -4,15 +4,14 @@
 // y como consecuencia por eso vive en la raíz del código este archivo.
 import path from "node:path"
 import { fileURLToPath } from "node:url"
+import { app } from "electron"
 
-// El código sale siempre del disco; los datos van junto al ejecutable.
+// El código sale siempre del disco; los datos, del perfil del usuario.
 const CODE_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..")
 
-// Empaquetada, el código vive bajo los recursos de Electron, que son de solo lectura.
-const isPackaged = typeof process.resourcesPath === "string" && CODE_ROOT.startsWith(process.resourcesPath)
-export const APP_ROOT = isPackaged ? path.dirname(process.execPath) : CODE_ROOT
-
-export const DATA_DIR = path.join(APP_ROOT, "data")
+// Instalada, la app queda en una ruta de solo lectura. Desde "appData" y no "userData",
+// que es esta misma carpeta, porque main.js lo reapunta al perfil de sesión.
+export const DATA_DIR = path.join(app.getPath("appData"), app.getName())
 export const SETTINGS_FILE = path.join(DATA_DIR, "settings.json")
 export const VOICES_DIR = path.join(DATA_DIR, "voices")
 export const CACHE_DIR = path.join(DATA_DIR, "cache")

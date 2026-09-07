@@ -41,11 +41,10 @@ Hace falta [Node](https://nodejs.org) 26 o superior y [pnpm](https://pnpm.io).
 ```bash
 pnpm install         # una vez
 pnpm dev             # compila la interfaz y arranca la app con las devtools abiertas
-pnpm build           # genera el ejecutable de este sistema
-pnpm clean           # borra .build, la carpeta de trabajo del build
+pnpm build           # genera el instalable de este sistema
 ```
 
-`pnpm build` construye la app en `.build/` y deja el zip en `out/`, para el sistema desde el que se lanza y siempre en x64 (amd64).
+`pnpm build` deja el instalable en `out/`, para el sistema desde el que se lanza y siempre en x64 (amd64): instalador NSIS en Windows, `.dmg` y `.pkg` en macOS, y AppImage, `.deb` y `.pacman` en Linux.
 
 Aquí no hay nada que configurar: al activar el [plugin](https://github.com/abdedarghal111/claude-lite-speaker-plugin), Claude Code ya conoce el puerto y se conecta él solo a `http://127.0.0.1:51703/mcp`, avisando de si lo ha conseguido. Si la app no está abierta, reintenta por su cuenta hasta que la abras, sin reiniciar la sesión.
 
@@ -53,22 +52,20 @@ Aquí no hay nada que configurar: al activar el [plugin](https://github.com/abde
 
 | Pieza | Dónde | Qué hace |
 |---|---|---|
-| Bandeja y ventana | `src/class/Tray.js`, `src/class/Window.js` | Icono, menú y la ventana de ajustes, que usa el webview nativo del sistema |
+| Bandeja y ventana | `src/class/Tray.js`, `src/class/Window.js` | Icono, menú y la ventana de ajustes, que es una ventana de Electron servida por el esquema `app://` |
 | Servidor MCP | `src/class/MCP.js` | Express en un puerto fijo, con `/mcp` y los comandos que consume la ventana |
 | Síntesis | `src/class/AudioEngine.js` | El pipeline de Piper reescrito en JS: espeak-ng (WASM) saca los fonemas, el modelo VITS de la voz los convierte en audio con onnxruntime |
 | Reproducción | `src/class/AudioOutput.js`, `src/class/Chat.js` | Cola por cliente y salida con node-web-audio-api |
 | Voces | `src/class/VoicesManager.js` | Catálogo remoto y ficheros de voz en disco |
 | Interfaz | `frontend-src/` | Svelte 5 y Tailwind 4, compilados con Vite a `frontend/` |
 
-Lo que sale del build es el propio binario de Node con un script de arranque inyectado dentro (el SEA nativo, `node --build-sea`), y a su lado, en la misma carpeta, el código fuente y las dependencias que va a ejecutar. Por eso hay dos entradas: `src/exe-entry.cjs` viaja dentro del binario y `src/app-entry.cjs` es ya un fichero normal del disco, que es quien puede cargar `main.js`.
-
-Con eso hecho, el postbuild de cada sistema (`scripts/lib/`) maquilla ese binario para que parezca lo que es: le pone el nombre y el icono de la app, le quita la consola en Windows, lo mete en un bundle `.app` firmado en macOS o le añade el `.desktop` en Linux. Y al final empaqueta la carpeta entera en el zip.
+El build lo hace `electron-builder`, configurado en `electron-builder.yml`: monta la app sobre el dist de Electron y genera el instalador de cada sistema. Ahí se declara también qué se queda fuera del paquete y qué binarios nativos van fuera del asar.
 
 **Solo probado en Windows.** El build de macOS y el de Linux están escritos pero sin verificar.
 
-La interfaz es lo único que se compila aparte: la fuente vive en `frontend-src/` y `vite build` la deja en `frontend/`, que está fuera de git y es la carpeta que se empaqueta. `pnpm build` la reconstruye antes de generar el ejecutable, así que no hace falta acordarse.
+La interfaz es lo único que se compila aparte: la fuente vive en `frontend-src/` y `vite build` la deja en `frontend/`, que está fuera de git y es la carpeta que se empaqueta. `pnpm build` la reconstruye antes de empaquetar, así que no hace falta acordarse.
 
-Los datos (ajustes, voces descargadas, caché y log) van en `data/`, junto al ejecutable, así que la app es portable y se desinstala borrando su carpeta.
+Los datos (ajustes, voces descargadas, caché, log y el perfil de sesión de la ventana) van en la carpeta del usuario: `%APPDATA%\claude-lite-speaker` en Windows, `~/Library/Application Support/claude-lite-speaker` en macOS y `~/.config/claude-lite-speaker` en Linux. Es la misma en desarrollo y en la app instalada.
 
 ## Menciones honorables
 

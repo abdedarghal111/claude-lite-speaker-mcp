@@ -7,16 +7,6 @@ import { promisify } from "node:util"
 
 const execFileAsync = promisify(execFile)
 
-function exeName() {
-    if (process.platform === "win32") {
-        return "claude-lite-speaker-tray-win_x64.exe"
-    }
-    if (process.platform === "darwin") {
-        return "claude-lite-speaker-tray-mac_x64"
-    }
-    return "claude-lite-speaker-tray-linux_x64"
-}
-
 // ----------------------------------------------------------------------------
 // Windows: acceso directo en la carpeta de Inicio
 // ----------------------------------------------------------------------------
@@ -68,7 +58,7 @@ async function windowsAutostartTarget() {
     return result ? String(result.stdout || "").trim() : null
 }
 
-async function setWindowsAutostart(target, appRoot, enabled) {
+async function setWindowsAutostart(target, enabled) {
     const linkPath = windowsStartupLinkPath()
     if (!enabled) {
         await fs.promises.rm(linkPath, { force: true }).catch(() => {})
@@ -79,7 +69,7 @@ async function setWindowsAutostart(target, appRoot, enabled) {
         `$sc = $s.CreateShortcut('${linkPath}'); ` +
         `$sc.TargetPath = '${target}'; ` +
         `$sc.Arguments = '--opened-from-autostart'; ` +
-        `$sc.WorkingDirectory = '${appRoot}'; ` +
+        `$sc.WorkingDirectory = '${path.dirname(target)}'; ` +
         `$sc.Save()`
     await execFileAsync("powershell", ["-NoProfile", "-Command", ps])
     await clearWindowsStartupApproved()
@@ -198,22 +188,21 @@ async function currentAutostartTarget() {
 
 // Se llama en cada arranque: si el autoarranque apunta a una ruta distinta
 // de la actual (app movida o reempaquetada), lo regenera.
-export async function initAutostart(appRoot) {
+export async function initAutostart() {
     if (!(await isAutostartEnabled())) {
         return
     }
-    const target = path.join(appRoot, exeName())
-    if ((await currentAutostartTarget()) !== target) {
-        await setAutostart(appRoot, true)
+    if ((await currentAutostartTarget()) !== process.execPath) {
+        await setAutostart(true)
     }
 }
 
-// appRoot: resuelto por quien llama (ver Tray.js); apunta al binario
-// compilado, no a "node src/main.js".
-export async function setAutostart(appRoot, enabled) {
-    const target = path.join(appRoot, exeName())
+// El objetivo es el binario que está corriendo, que es el de la app instalada; en
+// desarrollo sería el de Electron, y ahí el autoarranque no tiene sentido.
+export async function setAutostart(enabled) {
+    const target = process.execPath
     if (process.platform === "win32") {
-        return setWindowsAutostart(target, appRoot, enabled)
+        return setWindowsAutostart(target, enabled)
     }
     if (process.platform === "darwin") {
         return setMacAutostart(target, enabled)
