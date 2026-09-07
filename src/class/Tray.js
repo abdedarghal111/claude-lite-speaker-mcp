@@ -41,9 +41,8 @@ export class Tray {
             speaking: ICONS.speaking.map((p) => nativeImage.createFromPath(p)),
         }
 
-        this.trayHandle = this.createTrayHandle()
-
-        // La ventana de ajustes vive en el mismo proceso (ver class/Window.js).
+        // La ventana de ajustes vive en el mismo proceso (ver class/Window.js). Se crea
+        // antes que la bandeja, que la usa desde el menú y desde el clic del icono.
         const appIconPath = path.join(resourcesDir, "icons", "appIcon.png")
         this.window = new Window({
             app: this.app,
@@ -57,6 +56,8 @@ export class Tray {
                 openDataFolder: () => openFolder(dataDir),
             },
         })
+
+        this.trayHandle = this.createTrayHandle()
 
         // Anima el icono con un poll propio, independiente del que hace el renderer para su panel.
         setInterval(() => this.updateIcon(), 250)
