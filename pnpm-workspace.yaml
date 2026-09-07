@@ -1,4 +1,5 @@
 allowBuilds:
+  electron-winstaller: false
   bufferutil: true
   es5-ext: true
   onnxruntime-node: true

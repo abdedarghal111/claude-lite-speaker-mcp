@@ -1,0 +1,46 @@
+appId: com.claudeliteSpeaker.trayapp
+productName: Claude Lite Speaker
+
+directories:
+  output: out
+
+files:
+  - "**/*"
+  - "!data${/*}"
+  - "!frontend-src${/*}"
+  - "!pnpm-workspace.yaml"
+  - "!inkspaceLogo.svg"
+  - "!node_modules/onnxruntime-node/bin/napi-v6/!(${platform})${/*}"
+  - "!node_modules/**/*{darwin,win32,linux}*.node"
+  - "node_modules/**/*${platform}*.node"
+  - "!node_modules/**/*arm*.node"
+  - "!node_modules/onnxruntime-node/bin/napi-v6/*/arm64${/*}"
+  - "!node_modules/onnxruntime-node/bin/napi-v6/**/*providers_cuda*"
+  - "!node_modules/onnxruntime-node/bin/napi-v6/**/*providers_tensorrt*"
+
+asar: true
+asarUnpack:
+  - "**/*.node"
+  - "**/onnxruntime-node/bin/**"
+  - "**/@echogarden/espeak-ng-emscripten/**"
+
+win:
+  target: nsis
+  icon: res/icons/appIcon.png
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+
+mac:
+  target: dmg
+  icon: res/icons/appIcon.png
+  category: public.app-category.utilities
+  identity: null
+
+linux:
+  target: [AppImage, deb]
+  icon: res/icons/appIcon.png
+  executableName: claude-lite-speaker
+  category: Utility

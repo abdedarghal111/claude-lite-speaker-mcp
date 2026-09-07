@@ -17,8 +17,7 @@
   "scripts": {
     "dev": "pnpm build:frontend && electron . --open-dev-tools",
     "build:frontend": "vite build --config frontend-src/vite.config.js",
-    "build": "node scripts/build.mjs",
-    "clean": "node scripts/build.mjs --clean"
+    "build": "pnpm build:frontend && electron-builder"
   },
   "dependencies": {
     "@echogarden/espeak-ng-emscripten": "^0.3.5",
@@ -31,11 +30,8 @@
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.3.0",
     "@tailwindcss/vite": "^4.3.3",
-    "archiver": "^8.0.0",
     "electron": "44.2.0",
-    "plist": "^5.0.0",
-    "png2icons": "^2.0.1",
-    "rcedit": "^5.0.2",
+    "electron-builder": "^26.15.3",
     "svelte": "^5.57.0",
     "tailwindcss": "^4.3.3",
     "vite": "^8.2.2"
