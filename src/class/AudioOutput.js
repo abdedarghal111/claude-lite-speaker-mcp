@@ -1,12 +1,14 @@
 // Reproducción de audio con node-web-audio-api.
 import { AudioContext } from "node-web-audio-api"
+import { Logger } from "./Logger.js"
 
 export class AudioOutput {
     // El AudioContext de la app.
     static #ctx = null
 
-    // id -> { source, gain, stoppedIntentionally }. stoppedIntentionally es
-    // true si se cortó con stop()/stopAll(), false si terminó por sí sola.
+    // id -> { source, gain, volume, stoppedIntentionally }. source y gain son null hasta
+    // que la reproducción arranca. stoppedIntentionally es true si se cortó con
+    // stop()/stopAll(), false si terminó por sí sola.
     static #playbacks = new Map()
 
     static #getContext() {
@@ -16,16 +18,42 @@ export class AudioOutput {
         return AudioOutput.#ctx
     }
 
+    // Reengancha el contexto al dispositivo de salida predeterminado de ahora. Pasa por
+    // "none" porque repetir el mismo identificador no reabre el flujo.
+    static async #followDefaultDevice(context) {
+        try {
+            await context.setSinkId({ type: "none" })
+            await context.setSinkId("")
+        } catch (cause) {
+            Logger.warn("audio", "No se pudo mover el audio al dispositivo actual; suena por el anterior.", cause)
+        }
+    }
+
     // Reproduce un buffer PCM y no resuelve hasta que termina o se corta.
-    static playPcm(id, samples, sampleRate, volume = 1) {
+    static async playPcm(id, samples, sampleRate, volume = 1) {
+        if (samples.length === 0) {
+            return true
+        }
+
+        // Se registra antes de reenganchar el dispositivo para que un stop() de ese
+        // intervalo la encuentre.
+        const playback = { source: null, gain: null, volume, stoppedIntentionally: false }
+        AudioOutput.#playbacks.set(id, playback)
+
+        // Solo con un contexto ya abierto y la cola vacía: reabrir el flujo cortaría el
+        // audio en curso.
+        const reused = AudioOutput.#ctx !== null
+        const context = AudioOutput.#getContext()
+        if (reused && AudioOutput.#playbacks.size === 1) {
+            await AudioOutput.#followDefaultDevice(context)
+        }
+
+        if (playback.stoppedIntentionally) {
+            AudioOutput.#forget(id, playback)
+            return false
+        }
+
         return new Promise((resolve, reject) => {
-            if (samples.length === 0) {
-                resolve(true)
-                return
-            }
-
-            const context = AudioOutput.#getContext()
-
             // samples: Float32Array mono (-1..1)
             const buffer = context.createBuffer(1, samples.length, sampleRate)
             buffer.copyToChannel(samples, 0)
@@ -35,32 +63,34 @@ export class AudioOutput {
 
             // volume: multiplicador de amplitud
             const gain = context.createGain()
-            gain.gain.value = volume
+            gain.gain.value = playback.volume
 
             source.connect(gain)
             gain.connect(context.destination)
 
-            const playback = { source, gain, stoppedIntentionally: false }
+            playback.source = source
+            playback.gain = gain
 
             source.onended = () => {
-                if (AudioOutput.#playbacks.get(id) === playback) {
-                    AudioOutput.#playbacks.delete(id)
-                }
+                AudioOutput.#forget(id, playback)
                 // true si sonó entera, false si se cortó
                 resolve(!playback.stoppedIntentionally)
             }
 
-            // id: para pararla o cambiarle el volumen luego
             try {
-                AudioOutput.#playbacks.set(id, playback)
                 source.start()
             } catch (err) {
-                if (AudioOutput.#playbacks.get(id) === playback) {
-                    AudioOutput.#playbacks.delete(id)
-                }
+                AudioOutput.#forget(id, playback)
                 reject(err)
             }
         })
+    }
+
+    // Solo si sigue siendo la misma: puede haberla reemplazado otra con el mismo id.
+    static #forget(id, playback) {
+        if (AudioOutput.#playbacks.get(id) === playback) {
+            AudioOutput.#playbacks.delete(id)
+        }
     }
 
     // Corta la reproducción de este id concreto, sin tocar las demás.
@@ -69,8 +99,9 @@ export class AudioOutput {
         if (!playback) {
             return { stopped: false, reason: "No hay ningún audio reproduciéndose ahora mismo con ese identificador." }
         }
+        // Sin source, la marca basta: playPcm la descarta antes de arrancar.
         playback.stoppedIntentionally = true
-        playback.source.stop()
+        playback.source?.stop()
         return { stopped: true }
     }
 
@@ -83,10 +114,11 @@ export class AudioOutput {
         for (const playback of AudioOutput.#playbacks.values()) {
             playback.stoppedIntentionally = true
             try {
-                playback.source.stop()
+                playback.source?.stop()
                 stoppedAny = true
-            } catch {
-                /* este en concreto no se pudo parar, seguimos con el resto */
+            } catch (cause) {
+                // Se sigue con el resto: parar unas no depende de parar las otras.
+                Logger.warn("audio", "No se pudo parar una de las reproducciones en curso.", cause)
             }
         }
         return stoppedAny ? { stopped: true } : { stopped: false, reason: "No se pudo parar ningún audio en curso." }
@@ -98,7 +130,7 @@ export class AudioOutput {
         if (!playback) {
             return { changed: false, reason: "No hay ningún audio reproduciéndose ahora mismo con ese identificador." }
         }
-        playback.gain.gain.value = volume
+        AudioOutput.#applyVolume(playback, volume)
         return { changed: true }
     }
 
@@ -108,9 +140,17 @@ export class AudioOutput {
             return { changed: false, reason: "No hay ningún audio reproduciéndose ahora mismo." }
         }
         for (const playback of AudioOutput.#playbacks.values()) {
-            playback.gain.gain.value = volume
+            AudioOutput.#applyVolume(playback, volume)
         }
         return { changed: true }
+    }
+
+    // Guarda el volumen y lo aplica al nodo si ya existe.
+    static #applyVolume(playback, volume) {
+        playback.volume = volume
+        if (playback.gain) {
+            playback.gain.gain.value = volume
+        }
     }
 
     static isPlaying(id) {
