@@ -24,6 +24,13 @@ export const VOLUME_CEIL_DB = 18
 // Margen antes de dar paso al siguiente audio de la cola.
 export const PLAYBACK_DRAIN_MS = 1000 * 0.5 // 0.5 segundos
 
+// Espera máxima al preguntarle al sistema cuál es la salida predeterminada.
+export const AUDIO_DEVICE_QUERY_MS = 1000
+
+// Silencio tras el cual la salida se vuelve a abrir cuando no se puede preguntar cuál es
+// la predeterminada (ver class/AudioOutput.js).
+export const AUDIO_DEVICE_REFRESH_MS = 1000 * 2 // 2 segundos
+
 // Debe coincidir con la URL declarada en plugin/.claude-plugin/plugin.json.
 export const AUDIO_SERVER_HTTP_PORT = 51703
 

@@ -1,32 +1,78 @@
 // Reproducción de audio con node-web-audio-api.
+import { execFile } from "node:child_process"
+import { promisify } from "node:util"
 import { AudioContext } from "node-web-audio-api"
 import { Logger } from "./Logger.js"
+import { AUDIO_DEVICE_REFRESH_MS, AUDIO_DEVICE_QUERY_MS } from "../values/constants.js"
+
+const execFileAsync = promisify(execFile)
 
 export class AudioOutput {
     // El AudioContext de la app.
     static #ctx = null
+
+    // Salida predeterminada que había al abrir el contexto, o null si no se pudo saber.
+    static #openedFor = null
+
+    // Cuándo terminó lo último que sonó, para saber cuánto lleva callada la salida.
+    static #idleSince = 0
 
     // id -> { source, gain, volume, stoppedIntentionally }. source y gain son null hasta
     // que la reproducción arranca. stoppedIntentionally es true si se cortó con
     // stop()/stopAll(), false si terminó por sí sola.
     static #playbacks = new Map()
 
-    static #getContext() {
+    // openedFor: nombre de la salida predeterminada al abrirla, para comparar más tarde.
+    static #getContext(openedFor) {
         if (!AudioOutput.#ctx) {
             AudioOutput.#ctx = new AudioContext()
+            AudioOutput.#openedFor = openedFor
         }
         return AudioOutput.#ctx
     }
 
-    // Reengancha el contexto al dispositivo de salida predeterminado de ahora. Pasa por
-    // "none" porque repetir el mismo identificador no reabre el flujo.
-    static async #followDefaultDevice(context) {
-        try {
-            await context.setSinkId({ type: "none" })
-            await context.setSinkId("")
-        } catch (cause) {
-            Logger.warn("audio", "No se pudo mover el audio al dispositivo actual; suena por el anterior.", cause)
+    // Nombre de la salida predeterminada del sistema, o null si no hay a quién preguntar.
+    // Solo vale para compararlo consigo mismo: la librería de audio no entiende el nombre.
+    static async #defaultOutput() {
+        if (process.platform !== "linux") {
+            return null
         }
+        try {
+            const { stdout } = await execFileAsync("pactl", ["get-default-sink"], {
+                timeout: AUDIO_DEVICE_QUERY_MS,
+            })
+            return stdout.trim() || null
+        } catch {
+            return null
+        }
+    }
+
+    // Cierra la salida abierta, para que la siguiente se abra sobre la predeterminada de
+    // ahora. Solo se llama con la cola vacía: cerrarla cortaría el audio en curso.
+    static async #dropContext() {
+        const context = AudioOutput.#ctx
+        if (!context) {
+            return
+        }
+        AudioOutput.#ctx = null
+        AudioOutput.#openedFor = null
+        try {
+            await context.close()
+        } catch (cause) {
+            Logger.warn("audio", "No se pudo cerrar la salida de audio anterior.", cause)
+        }
+    }
+
+    // true si la salida abierta ya no es la predeterminada. Sin nombre que comparar, se
+    // decide por el silencio acumulado.
+    static #shouldReopen(current, idleFor) {
+        if (!AudioOutput.#ctx) {
+            return false
+        }
+        if (current === null || AudioOutput.#openedFor === null) {
+            return idleFor >= AUDIO_DEVICE_REFRESH_MS
+        }
+        return current !== AudioOutput.#openedFor
     }
 
     // Reproduce un buffer PCM y no resuelve hasta que termina o se corta.
@@ -35,18 +81,20 @@ export class AudioOutput {
             return true
         }
 
-        // Se registra antes de reenganchar el dispositivo para que un stop() de ese
-        // intervalo la encuentre.
+        // Se registra antes de abrir la salida para que un stop() de ese intervalo la encuentre.
+        const idleFor = Date.now() - AudioOutput.#idleSince
         const playback = { source: null, gain: null, volume, stoppedIntentionally: false }
         AudioOutput.#playbacks.set(id, playback)
 
-        // Solo con un contexto ya abierto y la cola vacía: reabrir el flujo cortaría el
-        // audio en curso.
-        const reused = AudioOutput.#ctx !== null
-        const context = AudioOutput.#getContext()
-        if (reused && AudioOutput.#playbacks.size === 1) {
-            await AudioOutput.#followDefaultDevice(context)
+        // Solo con la cola vacía, que es cuando se puede cerrar la salida sin cortar nada.
+        let current = AudioOutput.#openedFor
+        if (AudioOutput.#playbacks.size === 1) {
+            current = await AudioOutput.#defaultOutput()
+            if (AudioOutput.#shouldReopen(current, idleFor)) {
+                await AudioOutput.#dropContext()
+            }
         }
+        const context = AudioOutput.#getContext(current)
 
         if (playback.stoppedIntentionally) {
             AudioOutput.#forget(id, playback)
@@ -90,6 +138,9 @@ export class AudioOutput {
     static #forget(id, playback) {
         if (AudioOutput.#playbacks.get(id) === playback) {
             AudioOutput.#playbacks.delete(id)
+        }
+        if (AudioOutput.#playbacks.size === 0) {
+            AudioOutput.#idleSince = Date.now()
         }
     }
 
