@@ -9,4 +9,5 @@ contextBridge.exposeInMainWorld("native", {
     setAutostart: (enabled) => ipcRenderer.invoke("native:setAutostart", enabled),
     openDevtools: () => ipcRenderer.invoke("native:openDevtools"),
     openDataFolder: () => ipcRenderer.invoke("native:openDataFolder"),
+    quitApp: () => ipcRenderer.invoke("native:quitApp"),
 })

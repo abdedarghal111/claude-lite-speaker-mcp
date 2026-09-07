@@ -51,6 +51,7 @@ export class Tray {
                 setAutostart: (enabled) => setAutostart(enabled),
                 openDevtools: () => this.window.openDevtools(),
                 openDataFolder: () => openFolder(dataDir),
+                quitApp: () => this.quit(),
             },
         })
 
@@ -72,7 +73,7 @@ export class Tray {
                 { label: "Salir", click: () => this.quit() },
             ])
         )
-        // Clic simple alterna mostrar/ocultar; solo emite el evento en Windows/macOS.
+        // Clic simple alterna mostrar/ocultar la ventana.
         handle.on("click", () => {
             if (this.window.isOpen()) {
                 this.window.close()
