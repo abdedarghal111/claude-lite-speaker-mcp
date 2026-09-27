@@ -9,46 +9,21 @@ permissions:
   contents: write
 
 jobs:
-  unix:
+  build:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-24.04]
-
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v5
-
-      - name: Install Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: 26
-          check-latest: true
-          package-manager-cache: false
-
-      - name: Install pnpm
-        run: npm install --global pnpm@11.24.0
-
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
-
-      - name: Build and release
-        run: |
-          if [ "$RUNNER_OS" == "Linux" ]; then
-            pnpm run build:linux --publish always
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-            pnpm run build:mac --publish always
-          fi
-
-  windows:
-    runs-on: windows-latest
-
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        include:
+          - os: windows-latest
+            script: build:win
+            artifact: windows
+          - os: macos-latest
+            script: build:mac
+            artifact: macos
+          - os: ubuntu-24.04
+            script: build:linux
+            artifact: linux
 
     steps:
       - name: Check out Git repository
@@ -61,30 +36,52 @@ jobs:
           check-latest: true
           package-manager-cache: false
 
+      - name: Install the rpm and pacman tooling (Linux only)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y rpm libarchive-tools
+
       - name: Install pnpm
         run: npm install --global pnpm@11.24.0
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Build and release
-        run: pnpm run build:win --publish always
+      - name: Build the installers
+        run: pnpm run ${{ matrix.script }} --publish never
 
-  create-release-publication:
+      - name: Upload the installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: installers-${{ matrix.artifact }}
+          path: |
+            out/*.exe
+            out/*.dmg
+            out/*.deb
+            out/*.rpm
+            out/*.pacman
+          if-no-files-found: error
+          retention-days: 1
+
+  release:
     runs-on: ubuntu-24.04
-    needs: [unix, windows]
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    needs: build
 
     steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v5
-
-      - name: Set release title
-        uses: joutvhu/create-release@v1
+      - name: Download every installer
+        uses: actions/download-artifact@v4
         with:
-          tag_name: ${{ github.ref_name }}
-          name: 'Claude Lite Speaker ${{ github.ref_name }}'
-          body: 'Auto-generated release for ${{ github.ref_name }}'
-          draft: false
-          prerelease: false
+          pattern: installers-*
+          merge-multiple: true
+          path: installers
+
+      - name: List what will be published
+        run: ls -lh installers
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" installers/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Claude Lite Speaker $GITHUB_REF_NAME" \
+            --generate-notes
