@@ -26,7 +26,8 @@ asarUnpack:
 
 win:
   target: nsis
-  icon: res/icons/appIcon.png
+  icon: res/icons/appIcon.ico
+  artifactName: "${productName}-${version}-win-setup.${ext}"
 
 nsis:
   oneClick: false
@@ -34,13 +35,15 @@ nsis:
   allowToChangeInstallationDirectory: true
 
 mac:
-  target: [dmg, pkg]
+  target: dmg
   icon: res/icons/appIcon.png
   category: public.app-category.utilities
   identity: null
+  artifactName: "${productName}-${version}-mac.${ext}"
 
 linux:
-  target: [AppImage, deb, pacman]
+  target: deb
   icon: res/icons/appIcon.png
   executableName: claude-lite-speaker
   category: Utility
+  artifactName: "${productName}-${version}-linux.${ext}"
