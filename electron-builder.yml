@@ -24,6 +24,12 @@ asarUnpack:
   - "**/onnxruntime-node/bin/**"
   - "**/@echogarden/espeak-ng-emscripten/**"
 
+publish:
+  - provider: github
+    owner: abdedarghal111
+    repo: claude-lite-speaker-mcp
+    releaseType: release
+
 win:
   target: nsis
   icon: res/icons/appIcon.ico
