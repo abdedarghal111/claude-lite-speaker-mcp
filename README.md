@@ -23,7 +23,7 @@ Para que Claude Code lo use hace falta, además de tener esto corriendo, el plug
 
 Usándolo se nota una ventaja que no se esperaba: como el agente tiene que resumir lo que hace para decirlo en voz alta, el trato con él se vuelve mucho más claro y fluido. Escuchas el resumen mientras miras los datos en pantalla, en vez de leer todo el rato. Y todo eso sin contar que te va comunicando cada cambio que hace.
 
-⚠️ **Solo probado en Windows.** El código es multiplataforma y el build de macOS y Linux está escrito, pero sin verificar.
+⚠️ **Sin probar en macOS.** El código es multiplataforma y el build de macOS está escrito, pero sin verificar.
 
 ## Funcionalidades
 
@@ -44,7 +44,7 @@ pnpm dev             # compila la interfaz y arranca la app con las devtools abi
 pnpm build           # genera el instalable de este sistema
 ```
 
-`pnpm build` deja el instalable en `out/`, para el sistema desde el que se lanza y siempre en x64 (amd64): instalador NSIS en Windows, `.dmg` y `.pkg` en macOS, y AppImage, `.deb` y `.pacman` en Linux.
+`pnpm build` deja el instalable en `out/`, para el sistema desde el que se lanza y siempre en x64 (amd64): instalador NSIS en Windows, `.dmg` en macOS, y `.deb`, `.rpm` y `.pacman` en Linux.
 
 Aquí no hay nada que configurar: al activar el [plugin](https://github.com/abdedarghal111/claude-lite-speaker-plugin), Claude Code ya conoce el puerto y se conecta él solo a `http://127.0.0.1:51703/mcp`, avisando de si lo ha conseguido. Si la app no está abierta, reintenta por su cuenta hasta que la abras, sin reiniciar la sesión.
 
@@ -61,7 +61,7 @@ Aquí no hay nada que configurar: al activar el [plugin](https://github.com/abde
 
 El build lo hace `electron-builder`, configurado en `electron-builder.yml`: monta la app sobre el dist de Electron y genera el instalador de cada sistema. Ahí se declara también qué se queda fuera del paquete y qué binarios nativos van fuera del asar.
 
-**Solo probado en Windows.** El build de macOS y el de Linux están escritos pero sin verificar.
+**Sin probar en macOS.** El build de macOS está escrito pero sin verificar.
 
 La interfaz es lo único que se compila aparte: la fuente vive en `frontend-src/` y `vite build` la deja en `frontend/`, que está fuera de git y es la carpeta que se empaqueta. `pnpm build` la reconstruye antes de empaquetar, así que no hace falta acordarse.
 
