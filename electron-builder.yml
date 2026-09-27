@@ -48,7 +48,7 @@ mac:
   artifactName: "${productName}-${version}-mac.${ext}"
 
 linux:
-  target: deb
+  target: [deb, rpm, pacman]
   icon: res/icons/appIcon.png
   executableName: claude-lite-speaker
   category: Utility
