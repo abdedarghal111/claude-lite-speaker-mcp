@@ -36,9 +36,9 @@ jobs:
           check-latest: true
           package-manager-cache: false
 
-      - name: Install the rpm and pacman tooling (Linux only)
+      - name: Install the rpm and pacman tooling and the SDL3 build deps (Linux only)
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y rpm libarchive-tools
+        run: sudo apt-get update && sudo apt-get install -y rpm libarchive-tools cmake libpipewire-0.3-dev libpulse-dev libasound2-dev
 
       - name: Install pnpm
         run: npm install --global pnpm@11.24.0

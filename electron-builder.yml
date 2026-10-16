@@ -10,6 +10,8 @@ files:
   - "!frontend-src${/*}"
   - "!pnpm-workspace.yaml"
   - "!inkspaceLogo.svg"
+  - "!scripts${/*}"
+  - "!external-deps${/*}"
   - "!node_modules/onnxruntime-node/bin/napi-v6/!(${platform})${/*}"
   - "!node_modules/**/*{darwin,win32,linux}*.node"
   - "node_modules/**/*${platform}*.node"
@@ -23,6 +25,12 @@ asarUnpack:
   - "**/*.node"
   - "**/onnxruntime-node/bin/**"
   - "**/@echogarden/espeak-ng-emscripten/**"
+
+# SDL3 la genera scripts/build-sdl.mjs. Va en la raíz de la app, junto a resources/ y no
+# dentro, y se carga desde ahí (ver src/paths.js).
+extraFiles:
+  - from: "external-deps/sdl3/${platform}-${arch}"
+    to: "external-deps/sdl3"
 
 publish:
   - provider: github
