@@ -24,6 +24,15 @@ export const VOLUME_CEIL_DB = 18
 // Margen antes de dar paso al siguiente audio de la cola.
 export const PLAYBACK_DRAIN_MS = 1000 * 0.5 // 0.5 segundos
 
+// Versión de SDL3 que reproduce el audio, y el nombre de su librería en cada sistema
+// (ver scripts/build-sdl.mjs).
+export const SDL_VERSION = "3.4.18"
+export const SDL_LIBRARY_FILES = {
+    linux: "libSDL3.so.0",
+    darwin: "libSDL3.0.dylib",
+    win32: "SDL3.dll",
+}
+
 // Espera máxima al preguntarle al sistema cuál es la salida predeterminada.
 export const AUDIO_DEVICE_QUERY_MS = 1000
 

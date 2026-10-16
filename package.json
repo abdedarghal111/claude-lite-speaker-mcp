@@ -15,12 +15,13 @@
   },
   "packageManager": "pnpm@11.24.0",
   "scripts": {
-    "dev": "pnpm build:frontend && electron . --open-dev-tools",
+    "dev": "pnpm build:frontend && pnpm build:sdl && electron . --open-dev-tools",
     "build:frontend": "vite build --config frontend-src/vite.config.js",
-    "build": "pnpm build:frontend && electron-builder",
-    "build:win": "pnpm build:frontend && electron-builder --win",
-    "build:mac": "pnpm build:frontend && electron-builder --mac",
-    "build:linux": "pnpm build:frontend && electron-builder --linux"
+    "build:sdl": "node scripts/build-sdl.mjs",
+    "build": "pnpm build:frontend && pnpm build:sdl && electron-builder",
+    "build:win": "pnpm build:frontend && pnpm build:sdl && electron-builder --win",
+    "build:mac": "pnpm build:frontend && pnpm build:sdl && electron-builder --mac",
+    "build:linux": "pnpm build:frontend && pnpm build:sdl && electron-builder --linux"
   },
   "dependencies": {
     "@echogarden/espeak-ng-emscripten": "^0.3.5",
