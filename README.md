@@ -65,6 +65,8 @@ El build lo hace `electron-builder`, configurado en `electron-builder.yml`: mont
 
 La interfaz es lo único que se compila aparte: la fuente vive en `frontend-src/` y `vite build` la deja en `frontend/`, que está fuera de git y es la carpeta que se empaqueta. `pnpm build` la reconstruye antes de empaquetar, así que no hace falta acordarse.
 
+El audio sale por [SDL3](https://libsdl.org), solo con su parte de audio. `pnpm build:sdl` (que ya lanzan `pnpm dev` y `pnpm build`) deja la librería en `external-deps/sdl3/`, fuera de git. La compila desde el código fuente en los tres sistemas, así que hace falta [CMake](https://cmake.org) y un compilador de C: en Windows, las Build Tools de Visual Studio con C++; en macOS, las Command Line Tools de Xcode; y en Linux, además, las cabeceras de PipeWire, PulseAudio y ALSA (`libpipewire-0.3-dev libpulse-dev libasound2-dev` en Debian/Ubuntu). Solo se rehace al cambiar de versión, o con `pnpm build:sdl --force`.
+
 Los datos (ajustes, voces descargadas, caché, log y el perfil de sesión de la ventana) van en la carpeta del usuario: `%APPDATA%\claude-lite-speaker` en Windows, `~/Library/Application Support/claude-lite-speaker` en macOS y `~/.config/claude-lite-speaker` en Linux. Es la misma en desarrollo y en la app instalada.
 
 ## Menciones honorables
