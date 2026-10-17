@@ -5,6 +5,7 @@
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { app } from "electron"
+import { SDL_LIBRARY_FILES } from "./values/constants.js"
 
 // El código sale siempre del disco; los datos, del perfil del usuario.
 const CODE_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..")
@@ -31,3 +32,10 @@ export const PRELOAD_FILE = path.join(CODE_ROOT, "src", "preload.cjs")
 
 // Log de errores de la app.
 export const ERROR_LOG_FILE = path.join(DATA_DIR, "error.log")
+
+// Librería de SDL3 que reproduce el audio, generada por scripts/build-sdl.mjs. Instalada
+// va en external-deps/, al lado de resources/: junto al ejecutable en Windows y Linux, y
+// en Contents/ en macOS, que en los tres casos es la carpeta que contiene resources/.
+export const SDL_LIBRARY_FILE = app.isPackaged
+    ? path.join(process.resourcesPath, "..", "external-deps", "sdl3", SDL_LIBRARY_FILES[process.platform])
+    : path.join(CODE_ROOT, "external-deps", "sdl3", `${process.platform}-${process.arch}`, SDL_LIBRARY_FILES[process.platform])
