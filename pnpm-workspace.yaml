@@ -2,5 +2,7 @@ allowBuilds:
   electron-winstaller: false
   bufferutil: true
   es5-ext: true
+  # Su binario llega ya compilado en @koromix/koffi-<plataforma>; el script no hace falta.
+  koffi: false
   onnxruntime-node: true
   utf-8-validate: true
