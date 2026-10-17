@@ -5,13 +5,15 @@
 // predeterminada cambia o desaparece.
 import { Logger } from "./Logger.js"
 import { Sdl3 } from "../lib/sdl3.js"
-import { AUDIO_POLL_MS } from "../values/constants.js"
+import { AUDIO_POLL_MS, AUDIO_STALL_MS } from "../values/constants.js"
 
 export class AudioOutput {
     // true una vez iniciado el audio de SDL.
     static #ready = false
 
-    // id -> { id, stream, volume, resolve, reject }, la última reproducción de ese id.
+    // id -> { id, stream, volume, resolve, reject, pending, movedAt }, la última
+    // reproducción de ese id. pending y movedAt: lo que quedaba por sonar y cuándo bajó por
+    // última vez, para ver si se ha atascado.
     static #playbacks = new Map()
 
     // Todas las reproducciones que siguen sonando, también las que otra del mismo id ha
@@ -52,7 +54,7 @@ export class AudioOutput {
         }
 
         return new Promise((resolve, reject) => {
-            const playback = { id, stream, volume, resolve, reject }
+            const playback = { id, stream, volume, resolve, reject, pending: Infinity, movedAt: Date.now() }
             AudioOutput.#playbacks.set(id, playback)
             AudioOutput.#active.add(playback)
             if (!AudioOutput.#timer) {
@@ -81,6 +83,19 @@ export class AudioOutput {
                 AudioOutput.#finish(playback)
                 // true: sonó entera.
                 playback.resolve(true)
+            } else if (pending < playback.pending) {
+                playback.pending = pending
+                playback.movedAt = Date.now()
+            } else if (Date.now() - playback.movedAt >= AUDIO_STALL_MS) {
+                // La salida ha dejado de recoger audio sin que SDL dé error (un driver
+                // colgado, o PipeWire que deja de pedir datos al volver de suspender). Sin
+                // esto, la promesa no terminaría y la cola se quedaría muda para siempre.
+                AudioOutput.#finish(playback)
+                playback.reject(
+                    new Error(
+                        `El audio dejó de avanzar durante ${AUDIO_STALL_MS / 1000} s con ${pending} bytes por sonar y se ha cortado (${Sdl3.describeOutput()})`,
+                    ),
+                )
             }
         }
     }

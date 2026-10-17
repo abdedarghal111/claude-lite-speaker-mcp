@@ -27,6 +27,10 @@ export const PLAYBACK_DRAIN_MS = 1000 * 0.5 // 0.5 segundos
 // Cada cuánto se mira si los audios en curso ya han terminado de sonar.
 export const AUDIO_POLL_MS = 20
 
+// Tiempo sin que avance un audio tras el cual se da por atascado y se corta, para que no
+// bloquee la cola (ver class/AudioOutput.js).
+export const AUDIO_STALL_MS = 1000 * 5 // 5 segundos
+
 // Versión de SDL3 que reproduce el audio, y el nombre de su librería en cada sistema
 // (ver scripts/build-sdl.mjs).
 export const SDL_VERSION = "3.4.18"
