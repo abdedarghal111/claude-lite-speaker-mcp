@@ -45,7 +45,10 @@ export class AudioOutput {
             if (stream) {
                 Sdl3.destroy(stream)
             }
-            throw new Error(`No se pudo reproducir el audio: ${cause.message}`, { cause })
+            throw new Error(
+                `No se pudo reproducir el audio de ${samples.length} muestras a ${sampleRate} Hz: ${cause.message} (${Sdl3.describeOutput()})`,
+                { cause },
+            )
         }
 
         return new Promise((resolve, reject) => {
@@ -69,7 +72,9 @@ export class AudioOutput {
                 pending = Sdl3.pending(playback.stream)
             } catch (cause) {
                 AudioOutput.#finish(playback)
-                playback.reject(new Error(`No se pudo seguir la reproducción: ${cause.message}`, { cause }))
+                playback.reject(
+                    new Error(`No se pudo seguir la reproducción: ${cause.message} (${Sdl3.describeOutput()})`, { cause }),
+                )
                 continue
             }
             if (pending === 0) {
@@ -145,7 +150,7 @@ export class AudioOutput {
         try {
             Sdl3.setGain(playback.stream, volume)
         } catch (cause) {
-            Logger.warn("audio", "No se pudo cambiar el volumen del audio en curso.", cause)
+            Logger.warn("audio", `No se pudo cambiar el volumen del audio en curso: ${cause.message} (${Sdl3.describeOutput()})`, cause)
         }
     }
 

@@ -38,6 +38,10 @@ function load() {
         GetAudioStreamAvailable: lib.func("int SDL_GetAudioStreamAvailable(void *stream)"),
         SetAudioStreamGain: lib.func("bool SDL_SetAudioStreamGain(void *stream, float gain)"),
         DestroyAudioStream: lib.func("void SDL_DestroyAudioStream(void *stream)"),
+        GetCurrentAudioDriver: lib.func("const char *SDL_GetCurrentAudioDriver()"),
+        GetAudioDeviceName: lib.func("const char *SDL_GetAudioDeviceName(uint32_t devid)"),
+        GetAudioDeviceFormat: lib.func("bool SDL_GetAudioDeviceFormat(uint32_t devid, _Out_ SDL_AudioSpec *spec, int *sample_frames)"),
+        GetAudioFormatName: lib.func("const char *SDL_GetAudioFormatName(int format)"),
     }
     return api
 }
@@ -95,8 +99,9 @@ export const Sdl3 = {
     // Bytes que el dispositivo aún no ha recogido del stream. 0 = ya no queda nada por sonar.
     pending(stream) {
         const queued = api.GetAudioStreamQueued(stream)
+        check(queued >= 0, "SDL_GetAudioStreamQueued")
         const available = api.GetAudioStreamAvailable(stream)
-        check(queued >= 0 && available >= 0, "SDL_GetAudioStreamQueued")
+        check(available >= 0, "SDL_GetAudioStreamAvailable")
         return queued + available
     },
 
@@ -108,5 +113,23 @@ export const Sdl3 = {
     // Corta lo que quede por sonar y libera el stream.
     destroy(stream) {
         api.DestroyAudioStream(stream)
+    },
+
+    // Qué ve SDL de la salida predeterminada ahora mismo, para acompañar a un error en el
+    // registro. Nunca falla: lo que no se pueda saber sale como "?".
+    describeOutput() {
+        if (!api) {
+            return "SDL3 sin cargar"
+        }
+        const driver = api.GetCurrentAudioDriver()
+        if (!driver) {
+            return "audio de SDL sin iniciar"
+        }
+        const name = api.GetAudioDeviceName(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK) ?? "?"
+        const spec = {}
+        const format = api.GetAudioDeviceFormat(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, spec, null)
+            ? `${spec.channels} canales a ${spec.freq} Hz en ${api.GetAudioFormatName(spec.format)}`
+            : `formato desconocido (${api.GetError() || "sin mensaje"})`
+        return `driver ${driver}, salida predeterminada "${name}", ${format}`
     },
 }
