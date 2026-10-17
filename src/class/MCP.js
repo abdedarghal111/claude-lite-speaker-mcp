@@ -45,7 +45,7 @@ export class MCP {
 
     // Modo stateless: cada petición crea su propio McpServer y transporte, cerrados al terminar.
     #buildServer() {
-        const server = new McpServer({ name: "claude-lite-speaker", version: "1.0.0" })
+        const server = new McpServer({ name: "claude-lite-speaker", version: "1.1.0" })
 
         server.registerTool(
             "speak",
