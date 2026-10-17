@@ -28,7 +28,6 @@
     "@modelcontextprotocol/sdk": "^1.30.0",
     "express": "^5.2.1",
     "koffi": "^3.3.3",
-    "node-web-audio-api": "^2.2.0",
     "onnxruntime-node": "^1.29.0",
     "zod": "^4.5.4"
   },

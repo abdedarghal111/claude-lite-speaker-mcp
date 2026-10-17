@@ -55,7 +55,7 @@ Aquí no hay nada que configurar: al activar el [plugin](https://github.com/abde
 | Bandeja y ventana | `src/class/Tray.js`, `src/class/Window.js` | Icono, menú y la ventana de ajustes, que es una ventana de Electron servida por el esquema `app://` |
 | Servidor MCP | `src/class/MCP.js` | Express en un puerto fijo, con `/mcp` y los comandos que consume la ventana |
 | Síntesis | `src/class/AudioEngine.js` | El pipeline de Piper reescrito en JS: espeak-ng (WASM) saca los fonemas, el modelo VITS de la voz los convierte en audio con onnxruntime |
-| Reproducción | `src/class/AudioOutput.js`, `src/class/Chat.js` | Cola por cliente y salida con node-web-audio-api |
+| Reproducción | `src/class/AudioOutput.js`, `src/class/Chat.js`, `src/lib/sdl3.js` | Cola por cliente y salida con SDL3, cargado con koffi |
 | Voces | `src/class/VoicesManager.js` | Catálogo remoto y ficheros de voz en disco |
 | Interfaz | `frontend-src/` | Svelte 5 y Tailwind 4, compilados con Vite a `frontend/` |
 
