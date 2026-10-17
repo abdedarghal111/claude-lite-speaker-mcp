@@ -1,79 +1,25 @@
-// Reproducción de audio con node-web-audio-api.
-import { execFile } from "node:child_process"
-import { promisify } from "node:util"
-import { AudioContext } from "node-web-audio-api"
+// Reproducción de audio con SDL3 (ver lib/sdl3.js). Cada reproducción es un stream propio
+// sobre la salida predeterminada, y de los dispositivos se encarga SDL: elige el
+// predeterminado, convierte al formato que tenga (también a uno mono, como unos cascos
+// Bluetooth en manos libres), mezcla lo que suene a la vez y mueve los streams si la
+// predeterminada cambia o desaparece.
 import { Logger } from "./Logger.js"
-import { AUDIO_DEVICE_REFRESH_MS, AUDIO_DEVICE_QUERY_MS } from "../values/constants.js"
-
-const execFileAsync = promisify(execFile)
+import { Sdl3 } from "../lib/sdl3.js"
+import { AUDIO_POLL_MS } from "../values/constants.js"
 
 export class AudioOutput {
-    // El AudioContext de la app.
-    static #ctx = null
+    // true una vez iniciado el audio de SDL.
+    static #ready = false
 
-    // Salida predeterminada que había al abrir el contexto, o null si no se pudo saber.
-    static #openedFor = null
-
-    // Cuándo terminó lo último que sonó, para saber cuánto lleva callada la salida.
-    static #idleSince = 0
-
-    // id -> { source, gain, volume, stoppedIntentionally }. source y gain son null hasta
-    // que la reproducción arranca. stoppedIntentionally es true si se cortó con
-    // stop()/stopAll(), false si terminó por sí sola.
+    // id -> { id, stream, volume, resolve, reject }, la última reproducción de ese id.
     static #playbacks = new Map()
 
-    // openedFor: nombre de la salida predeterminada al abrirla, para comparar más tarde.
-    static #getContext(openedFor) {
-        if (!AudioOutput.#ctx) {
-            AudioOutput.#ctx = new AudioContext()
-            AudioOutput.#openedFor = openedFor
-        }
-        return AudioOutput.#ctx
-    }
+    // Todas las reproducciones que siguen sonando, también las que otra del mismo id ha
+    // reemplazado en #playbacks.
+    static #active = new Set()
 
-    // Nombre de la salida predeterminada del sistema, o null si no hay a quién preguntar.
-    // Solo vale para compararlo consigo mismo: la librería de audio no entiende el nombre.
-    static async #defaultOutput() {
-        if (process.platform !== "linux") {
-            return null
-        }
-        try {
-            const { stdout } = await execFileAsync("pactl", ["get-default-sink"], {
-                timeout: AUDIO_DEVICE_QUERY_MS,
-            })
-            return stdout.trim() || null
-        } catch {
-            return null
-        }
-    }
-
-    // Cierra la salida abierta, para que la siguiente se abra sobre la predeterminada de
-    // ahora. Solo se llama con la cola vacía: cerrarla cortaría el audio en curso.
-    static async #dropContext() {
-        const context = AudioOutput.#ctx
-        if (!context) {
-            return
-        }
-        AudioOutput.#ctx = null
-        AudioOutput.#openedFor = null
-        try {
-            await context.close()
-        } catch (cause) {
-            Logger.warn("audio", "No se pudo cerrar la salida de audio anterior.", cause)
-        }
-    }
-
-    // true si la salida abierta ya no es la predeterminada. Sin nombre que comparar, se
-    // decide por el silencio acumulado.
-    static #shouldReopen(current, idleFor) {
-        if (!AudioOutput.#ctx) {
-            return false
-        }
-        if (current === null || AudioOutput.#openedFor === null) {
-            return idleFor >= AUDIO_DEVICE_REFRESH_MS
-        }
-        return current !== AudioOutput.#openedFor
-    }
+    // Temporizador que mira qué reproducciones han terminado; solo corre si hay alguna.
+    static #timer = null
 
     // Reproduce un buffer PCM y no resuelve hasta que termina o se corta.
     static async playPcm(id, samples, sampleRate, volume = 1) {
@@ -81,66 +27,70 @@ export class AudioOutput {
             return true
         }
 
-        // Se registra antes de abrir la salida para que un stop() de ese intervalo la encuentre.
-        const idleFor = Date.now() - AudioOutput.#idleSince
-        const playback = { source: null, gain: null, volume, stoppedIntentionally: false }
-        AudioOutput.#playbacks.set(id, playback)
-
-        // Solo con la cola vacía, que es cuando se puede cerrar la salida sin cortar nada.
-        let current = AudioOutput.#openedFor
-        if (AudioOutput.#playbacks.size === 1) {
-            current = await AudioOutput.#defaultOutput()
-            if (AudioOutput.#shouldReopen(current, idleFor)) {
-                await AudioOutput.#dropContext()
+        let stream = null
+        try {
+            if (!AudioOutput.#ready) {
+                Sdl3.init()
+                AudioOutput.#ready = true
             }
-        }
-        const context = AudioOutput.#getContext(current)
-
-        if (playback.stoppedIntentionally) {
-            AudioOutput.#forget(id, playback)
-            return false
+            // Antes de abrir, para que el stream vaya a la predeterminada de ahora y no a
+            // una que ya no existe.
+            Sdl3.pumpEvents()
+            // samples: Float32Array mono (-1..1). volume: multiplicador de amplitud.
+            stream = Sdl3.openPlaybackStream(sampleRate)
+            Sdl3.setGain(stream, volume)
+            Sdl3.put(stream, samples)
+            Sdl3.resume(stream)
+        } catch (cause) {
+            if (stream) {
+                Sdl3.destroy(stream)
+            }
+            throw new Error(`No se pudo reproducir el audio: ${cause.message}`, { cause })
         }
 
         return new Promise((resolve, reject) => {
-            // samples: Float32Array mono (-1..1)
-            const buffer = context.createBuffer(1, samples.length, sampleRate)
-            buffer.copyToChannel(samples, 0)
-
-            const source = context.createBufferSource()
-            source.buffer = buffer
-
-            // volume: multiplicador de amplitud
-            const gain = context.createGain()
-            gain.gain.value = playback.volume
-
-            source.connect(gain)
-            gain.connect(context.destination)
-
-            playback.source = source
-            playback.gain = gain
-
-            source.onended = () => {
-                AudioOutput.#forget(id, playback)
-                // true si sonó entera, false si se cortó
-                resolve(!playback.stoppedIntentionally)
-            }
-
-            try {
-                source.start()
-            } catch (err) {
-                AudioOutput.#forget(id, playback)
-                reject(err)
+            const playback = { id, stream, volume, resolve, reject }
+            AudioOutput.#playbacks.set(id, playback)
+            AudioOutput.#active.add(playback)
+            if (!AudioOutput.#timer) {
+                AudioOutput.#timer = setInterval(AudioOutput.#poll, AUDIO_POLL_MS)
             }
         })
     }
 
-    // Solo si sigue siendo la misma: puede haberla reemplazado otra con el mismo id.
-    static #forget(id, playback) {
-        if (AudioOutput.#playbacks.get(id) === playback) {
-            AudioOutput.#playbacks.delete(id)
+    // Termina las reproducciones que el dispositivo ya ha recogido enteras.
+    static #poll() {
+        // También mientras suena: si la salida desaparece a mitad, SDL mueve lo que suena
+        // a la nueva predeterminada en cuanto se le deja.
+        Sdl3.pumpEvents()
+        for (const playback of AudioOutput.#active) {
+            let pending
+            try {
+                pending = Sdl3.pending(playback.stream)
+            } catch (cause) {
+                AudioOutput.#finish(playback)
+                playback.reject(new Error(`No se pudo seguir la reproducción: ${cause.message}`, { cause }))
+                continue
+            }
+            if (pending === 0) {
+                AudioOutput.#finish(playback)
+                // true: sonó entera.
+                playback.resolve(true)
+            }
         }
-        if (AudioOutput.#playbacks.size === 0) {
-            AudioOutput.#idleSince = Date.now()
+    }
+
+    // Libera el stream y la saca de las listas, sin resolver su promesa.
+    static #finish(playback) {
+        AudioOutput.#active.delete(playback)
+        // Solo si sigue siendo la misma: puede haberla reemplazado otra con el mismo id.
+        if (AudioOutput.#playbacks.get(playback.id) === playback) {
+            AudioOutput.#playbacks.delete(playback.id)
+        }
+        Sdl3.destroy(playback.stream)
+        if (AudioOutput.#active.size === 0) {
+            clearInterval(AudioOutput.#timer)
+            AudioOutput.#timer = null
         }
     }
 
@@ -150,29 +100,22 @@ export class AudioOutput {
         if (!playback) {
             return { stopped: false, reason: "No hay ningún audio reproduciéndose ahora mismo con ese identificador." }
         }
-        // Sin source, la marca basta: playPcm la descarta antes de arrancar.
-        playback.stoppedIntentionally = true
-        playback.source?.stop()
+        AudioOutput.#finish(playback)
+        // false: se cortó antes de terminar.
+        playback.resolve(false)
         return { stopped: true }
     }
 
     // "Parar" global: corta todo lo que esté sonando, sea de la sesión que sea.
     static stopAll() {
-        if (AudioOutput.#playbacks.size === 0) {
+        if (AudioOutput.#active.size === 0) {
             return { stopped: false, reason: "No hay ningún audio reproduciéndose ahora mismo." }
         }
-        let stoppedAny = false
-        for (const playback of AudioOutput.#playbacks.values()) {
-            playback.stoppedIntentionally = true
-            try {
-                playback.source?.stop()
-                stoppedAny = true
-            } catch (cause) {
-                // Se sigue con el resto: parar unas no depende de parar las otras.
-                Logger.warn("audio", "No se pudo parar una de las reproducciones en curso.", cause)
-            }
+        for (const playback of AudioOutput.#active) {
+            AudioOutput.#finish(playback)
+            playback.resolve(false)
         }
-        return stoppedAny ? { stopped: true } : { stopped: false, reason: "No se pudo parar ningún audio en curso." }
+        return { stopped: true }
     }
 
     // Cambia en marcha el volumen de esta reproducción concreta, sin cortarla.
@@ -187,20 +130,22 @@ export class AudioOutput {
 
     // Cambia en marcha el volumen de todo lo que esté sonando.
     static setVolumeAll(volume) {
-        if (AudioOutput.#playbacks.size === 0) {
+        if (AudioOutput.#active.size === 0) {
             return { changed: false, reason: "No hay ningún audio reproduciéndose ahora mismo." }
         }
-        for (const playback of AudioOutput.#playbacks.values()) {
+        for (const playback of AudioOutput.#active) {
             AudioOutput.#applyVolume(playback, volume)
         }
         return { changed: true }
     }
 
-    // Guarda el volumen y lo aplica al nodo si ya existe.
+    // Un fallo se registra sin cortar el audio: sigue sonando con el volumen anterior.
     static #applyVolume(playback, volume) {
         playback.volume = volume
-        if (playback.gain) {
-            playback.gain.gain.value = volume
+        try {
+            Sdl3.setGain(playback.stream, volume)
+        } catch (cause) {
+            Logger.warn("audio", "No se pudo cambiar el volumen del audio en curso.", cause)
         }
     }
 
@@ -210,6 +155,15 @@ export class AudioOutput {
 
     // true si hay algo sonando en cualquier Chat, no solo en este.
     static isAnyPlaying() {
-        return AudioOutput.#playbacks.size > 0
+        return AudioOutput.#active.size > 0
+    }
+
+    // Corta lo que suene y cierra el audio de SDL. Solo al salir de la app.
+    static close() {
+        AudioOutput.stopAll()
+        if (AudioOutput.#ready) {
+            Sdl3.quit()
+            AudioOutput.#ready = false
+        }
     }
 }
