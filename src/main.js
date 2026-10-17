@@ -23,6 +23,7 @@ protocol.registerSchemesAsPrivileged([
 // Después de los manejadores, para que un import fallido quede registrado.
 const { App } = await import("./class/App.js")
 const { Notifier } = await import("./class/Notifier.js")
+const { AudioOutput } = await import("./class/AudioOutput.js")
 const { RESOURCES_DIR, FRONTEND_DIR, SESSION_PROFILE_DIR, DATA_DIR } = await import("./paths.js")
 
 // Perfil de sesión de la ventana, aparte del resto de datos (ver class/Window.js).
@@ -30,6 +31,9 @@ electronApp.setPath("userData", SESSION_PROFILE_DIR)
 
 // La app vive en la bandeja: sin ventanas abiertas no se sale.
 electronApp.on("window-all-closed", () => {})
+
+// Cierra el audio de SDL antes de que el proceso termine.
+electronApp.on("will-quit", () => AudioOutput.close())
 
 // En .then() y no con await: en ESM, un top-level await impide que llegue "ready".
 electronApp.whenReady().then(async () => {
