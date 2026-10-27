@@ -31,6 +31,10 @@ export const AUDIO_POLL_MS = 20
 // bloquee la cola (ver class/AudioOutput.js).
 export const AUDIO_STALL_MS = 1000 * 5 // 5 segundos
 
+// Reinicios seguidos del audio de SDL, sin que suene nada entre medias, tras los que se deja
+// de intentar y se pide reiniciar la app (ver class/AudioOutput.js).
+export const AUDIO_MAX_RESTARTS = 3
+
 // Versión de SDL3 que reproduce el audio, y el nombre de su librería en cada sistema
 // (ver scripts/build-sdl.mjs).
 export const SDL_VERSION = "3.4.18"

@@ -5,11 +5,17 @@
 // predeterminada cambia o desaparece.
 import { Logger } from "./Logger.js"
 import { Sdl3 } from "../lib/sdl3.js"
-import { AUDIO_POLL_MS, AUDIO_STALL_MS } from "../values/constants.js"
+import { AUDIO_POLL_MS, AUDIO_STALL_MS, AUDIO_MAX_RESTARTS } from "../values/constants.js"
 
 export class AudioOutput {
     // true una vez iniciado el audio de SDL.
     static #ready = false
+
+    // true si algún audio se ha atascado: el audio de SDL se reinicia antes del siguiente.
+    static #stalled = false
+
+    // Reinicios seguidos sin que haya sonado ningún audio entero desde el primero.
+    static #restarts = 0
 
     // id -> { id, stream, volume, resolve, reject, pending, movedAt }, la última
     // reproducción de ese id. pending y movedAt: lo que quedaba por sonar y cuándo bajó por
@@ -31,6 +37,14 @@ export class AudioOutput {
 
         let stream = null
         try {
+            // Tras un atasco, SDL puede haberse quedado sin poder sonar aunque el sistema sí
+            // funcione: pasó al volver de hibernar, cuando WirePlumber se cayó y se reinició
+            // (issue #29), y solo se arreglaba reiniciando la app. Iniciar el audio de cero
+            // rehace la conexión con el servidor de sonido y la lista de salidas. Solo sin
+            // nada sonando, porque cerrar el audio de SDL corta todos sus streams.
+            if (AudioOutput.#stalled && AudioOutput.#active.size === 0) {
+                AudioOutput.#restart()
+            }
             if (!AudioOutput.#ready) {
                 Sdl3.init()
                 AudioOutput.#ready = true
@@ -81,6 +95,10 @@ export class AudioOutput {
             }
             if (pending === 0) {
                 AudioOutput.#finish(playback)
+                if (AudioOutput.#restarts > 0) {
+                    Logger.info("audio", `El audio vuelve a sonar tras ${AudioOutput.#restarts} reinicio(s) de SDL.`)
+                    AudioOutput.#restarts = 0
+                }
                 // true: sonó entera.
                 playback.resolve(true)
             } else if (pending < playback.pending) {
@@ -91,6 +109,7 @@ export class AudioOutput {
                 // colgado, o PipeWire que deja de pedir datos al volver de suspender). Sin
                 // esto, la promesa no terminaría y la cola se quedaría muda para siempre.
                 AudioOutput.#finish(playback)
+                AudioOutput.#stalled = true
                 playback.reject(
                     new Error(
                         `El audio dejó de avanzar durante ${AUDIO_STALL_MS / 1000} s con ${pending} bytes por sonar y se ha cortado (${Sdl3.describeOutput()})`,
@@ -98,6 +117,33 @@ export class AudioOutput {
                 )
             }
         }
+    }
+
+    // Cierra el audio de SDL para que el siguiente audio lo inicie de cero. Cada reinicio se
+    // registra como error, para que avise al usuario. No se repite sin límite: si tras
+    // AUDIO_MAX_RESTARTS reinicios seguidos sigue sin sonar nada, reiniciar no lo arregla, así
+    // que se deja de intentar y se pide reiniciar la app. Vuelve a intentarse en cuanto un
+    // audio suene entero.
+    static #restart() {
+        AudioOutput.#stalled = false
+        const output = Sdl3.describeOutput()
+        if (AudioOutput.#restarts >= AUDIO_MAX_RESTARTS) {
+            if (AudioOutput.#restarts === AUDIO_MAX_RESTARTS) {
+                AudioOutput.#restarts++
+                Logger.error(
+                    "audio:restart",
+                    `El audio sigue atascado tras ${AUDIO_MAX_RESTARTS} reinicios de SDL y no se reinicia más; cierra y vuelve a abrir la app (${output}).`,
+                )
+            }
+            return
+        }
+        AudioOutput.#restarts++
+        Logger.error(
+            "audio:restart",
+            `Se ha reiniciado el audio de SDL (${AudioOutput.#restarts} de ${AUDIO_MAX_RESTARTS}) porque el último audio se atascó (${output}).`,
+        )
+        Sdl3.quit()
+        AudioOutput.#ready = false
     }
 
     // Libera el stream y la saca de las listas, sin resolver su promesa.
